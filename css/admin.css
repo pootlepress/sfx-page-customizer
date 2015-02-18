@@ -1,0 +1,22 @@
+#sfx-pc-meta-box .field {
+    margin-top: 15px;
+}
+
+#sfx-pc-meta-box .field > .label {
+    width: 200px;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#sfx-pc-meta-box .field > .control {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+#sfx-pc-meta-box .field > .control > .wp-picker-container > .wp-color-result {
+    margin: 0;
+}
+
+#sfx-pc-meta-box .field > .control > .image-upload-path {
+    width: 200px;
+}
