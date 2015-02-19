@@ -178,8 +178,8 @@ final class SFX_Page_Customizer {
 	}
 
 	public function register_meta_box() {
-		add_meta_box('sfx-pc-meta-box', 'Page Customizer', array($this, 'meta_box'), 'post');
-		add_meta_box('sfx-pc-meta-box', 'Page Customizer', array($this, 'meta_box'), 'page');
+		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'post');
+		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'page');
 	}
 
 	public function save_post($postID) {
