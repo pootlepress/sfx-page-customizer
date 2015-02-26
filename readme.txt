@@ -20,6 +20,7 @@ This plugin gives you an option under the Header settings in Storefront to align
 == Usage ==
 
 Once installed and activated, go to the WordPress customizer (Appearance > Customize) and under the section 'Header' in Storefront you will find a checkbox option for 'Align menu right'.
+For support please visit: http://www.pootlepress.com/support-form/
 
 == Installation ==
 
