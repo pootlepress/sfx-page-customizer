@@ -146,6 +146,8 @@ final class SFX_Page_Customizer {
 
 		add_action('wp_head', array($this, 'option_css'));
 
+		add_action('customize_register', array($this, 'customize_register'));
+
 		// needs to be hooked to 'wp_loaded', since this is the action that when executed, will filter get_option from customizer
 //		add_action('wp_loaded', array($this, 'get_options'), 100);
 
@@ -156,6 +158,22 @@ final class SFX_Page_Customizer {
 //		add_action('customize_register', array($this, 'customize_register'));
 
 	} // End __construct()
+
+	public function customize_register(WP_Customize_Manager $customizeManager) {
+		$customizeManager->add_setting('sfx-pc-show-page-post-title[checked]', array(
+			'type' => 'option',
+			'default' => true
+		));
+
+		$customizeManager->add_control(new WP_Customize_Control($customizeManager, 'sfx-pc-show-page-post-title', array(
+			'type' => 'checkbox',
+			'label' => 'Show page/post titles globally',
+			'section' => 'storefront_layout',
+			'settings' => 'sfx-pc-show-page-post-title[checked]',
+			'default' => 1,
+			'priority' => 1,
+		)));
+	}
 
 	public function admin_scripts() {
 		global $pagenow;
@@ -201,9 +219,16 @@ final class SFX_Page_Customizer {
 					$value = $sfxPCValues['header']['header-background-color'];
 					update_post_meta($postID, $this->get_meta_key('header', 'header-background-color'), $value);
 				}
+
 				if (isset($sfxPCValues['header']['header-background-image'])) {
 					$value = $sfxPCValues['header']['header-background-image'];
 					update_post_meta($postID, $this->get_meta_key('header', 'header-background-image'), $value);
+				}
+
+				if (isset($sfxPCValues['header']['show-page-post-title'])) {
+					update_post_meta($postID, $this->get_meta_key('header', 'show-page-post-title'), 'checked');
+				} else {
+					update_post_meta($postID, $this->get_meta_key('header', 'show-page-post-title'), 'unchecked');
 				}
 			}
 		}
@@ -211,6 +236,13 @@ final class SFX_Page_Customizer {
 
 	private function get_meta_fields() {
 		return array(
+			'show-page-post-title' => array(
+				'id' => 'show-page-post-title',
+				'section' => 'header',
+				'label' => 'Show page/post title',
+				'type' => 'checkbox',
+				'default' => 'checked'
+			),
 			'header-background-image' => array(
 				'id' => 'header-background-image',
 				'section' => 'header',
@@ -237,7 +269,7 @@ final class SFX_Page_Customizer {
 		}
 	}
 
-	protected function get_value($section, $id, $default) {
+	protected function get_value($section, $id, $default = null) {
 		global $post;
 
 		$metaKey = $this->get_meta_key($section, $id);
@@ -359,16 +391,12 @@ final class SFX_Page_Customizer {
 	 * @return  string       HTML markup for the field.
 	 */
 	protected function render_field_checkbox ( $key, $args ) {
-		$has_description = false;
 		$html = '';
-		if ( isset( $args['description'] ) ) {
-			$has_description = true;
-			$html .= '<label for="' . esc_attr( $key ) . '">' . "\n";
-		}
-		$html .= '<input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="checkbox" value="true"' . checked( esc_attr( $this->get_value( $args['id'], $args['default'], $args['section'] ) ), 'true', false ) . ' />' . "\n";
-		if ( $has_description ) {
-			$html .= wp_kses_post( $args['description'] ) . '</label>' . "\n";
-		}
+		$html .= '<div class="field">';
+		$html .= '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
+		$html .= '<div class="control"><input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="checkbox" value="true" ' . checked($this->get_value($args['section'], $args['id'], $args['default']), 'checked', false ) . ' /></div>';
+		$html .= '</div>';
+
 		return $html;
 	} // End render_field_checkbox()
 
@@ -423,8 +451,34 @@ final class SFX_Page_Customizer {
 
 		$css .= "@media screen and (min-width: 768px) {\n";
 
+
+		$showPagePostTitle = true;
+		$showPagePostTitleMeta = $this->get_value('header', 'show-page-post-title', null);
+		if ($showPagePostTitleMeta != null) {
+			$showPagePostTitle = $showPagePostTitleMeta == 'checked';
+		} else {
+			$arr = get_option('sfx-pc-show-page-post-title', array('checked' => true));
+			if (is_array($arr) && isset($arr['checked'])) {
+				$showPagePostTitleGlobally  = $arr['checked'] == true;
+			} else {
+				$showPagePostTitleGlobally  = false;
+			}
+
+//			$showPagePostTitleGlobally = get_option('sfx-pc-show-page-post-title', 'UNIQUE_DEFAULT');
+//			if ($showPagePostTitleGlobally === 'UNIQUE_DEFAULT') {
+//				$showPagePostTitleGlobally = true;
+//			} else {
+//				$showPagePostTitleGlobally = $showPagePostTitleGlobally == true;
+//			}
+			$showPagePostTitle = $showPagePostTitleGlobally;
+		}
+
 		$headerBgColor = $this->get_value('header', 'header-background-color', '');
 		$headerBgImage = $this->get_value('header', 'header-background-image', '');
+
+		if (!$showPagePostTitle) {
+			$css .= '.entry-title { display: none; }';
+		}
 
 		if ($headerBgColor != '') {
 			$css .= "#masthead { background-color: $headerBgColor; }\n";
