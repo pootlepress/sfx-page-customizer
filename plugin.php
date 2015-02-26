@@ -225,10 +225,9 @@ final class SFX_Page_Customizer {
 					update_post_meta($postID, $this->get_meta_key('header', 'header-background-image'), $value);
 				}
 
-				if (isset($sfxPCValues['header']['show-page-post-title'])) {
-					update_post_meta($postID, $this->get_meta_key('header', 'show-page-post-title'), 'checked');
-				} else {
-					update_post_meta($postID, $this->get_meta_key('header', 'show-page-post-title'), 'unchecked');
+				if (isset($sfxPCValues['header']['page-post-title'])) {
+					$value = $sfxPCValues['header']['page-post-title'];
+					update_post_meta($postID, $this->get_meta_key('header', 'page-post-title'), $value);
 				}
 			}
 		}
@@ -236,12 +235,13 @@ final class SFX_Page_Customizer {
 
 	private function get_meta_fields() {
 		return array(
-			'show-page-post-title' => array(
-				'id' => 'show-page-post-title',
+			'page-post-title' => array(
+				'id' => 'page-post-title',
 				'section' => 'header',
-				'label' => 'Show page/post title',
-				'type' => 'checkbox',
-				'default' => 'checked'
+				'label' => 'Page/post title',
+				'type' => 'select',
+				'default' => 'default',
+				'options' => array('default' => 'Global default', 'show' => 'Show', 'hide' => 'Hide')
 			),
 			'header-background-image' => array(
 				'id' => 'header-background-image',
@@ -409,16 +409,19 @@ final class SFX_Page_Customizer {
 	 * @return  string       HTML markup for the field.
 	 */
 	protected function render_field_select ( $key, $args ) {
-		$this->_has_select = true;
-
 		$html = '';
+		$html .= '<div class="field">';
+		$html .= '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
+		$html .= '<div class="control">';
 		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
 			$html .= '<select id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '">' . "\n";
 			foreach ( $args['options'] as $k => $v ) {
-				$html .= '<option value="' . esc_attr( $k ) . '"' . selected( esc_attr( $this->get_value( $args['id'], $args['default'], $args['section'] ) ), $k, false ) . '>' . esc_html( $v ) . '</option>' . "\n";
+				$html .= '<option value="' . esc_attr( $k ) . '"' . selected( esc_attr( $this->get_value($args['section'], $args['id'], $args['default']) ), $k, false ) . '>' . esc_html( $v ) . '</option>' . "\n";
 			}
 			$html .= '</select>' . "\n";
 		}
+		$html .= '</div>';
+		$html .= '</div>';
 		return $html;
 	} // End render_field_select()
 
@@ -451,26 +454,23 @@ final class SFX_Page_Customizer {
 
 		$css .= "@media screen and (min-width: 768px) {\n";
 
-
-		$showPagePostTitle = true;
-		$showPagePostTitleMeta = $this->get_value('header', 'show-page-post-title', null);
-		if ($showPagePostTitleMeta != null) {
-			$showPagePostTitle = $showPagePostTitleMeta == 'checked';
-		} else {
+		$showPagePostTitle = null;
+		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default');
+		if ($pagePostTitleMeta == 'default') {
 			$arr = get_option('sfx-pc-show-page-post-title', array('checked' => true));
 			if (is_array($arr) && isset($arr['checked'])) {
-				$showPagePostTitleGlobally  = $arr['checked'] == true;
+				$showPagePostTitleGlobally = $arr['checked'] == true;
 			} else {
-				$showPagePostTitleGlobally  = false;
+				$showPagePostTitleGlobally = false;
 			}
 
-//			$showPagePostTitleGlobally = get_option('sfx-pc-show-page-post-title', 'UNIQUE_DEFAULT');
-//			if ($showPagePostTitleGlobally === 'UNIQUE_DEFAULT') {
-//				$showPagePostTitleGlobally = true;
-//			} else {
-//				$showPagePostTitleGlobally = $showPagePostTitleGlobally == true;
-//			}
 			$showPagePostTitle = $showPagePostTitleGlobally;
+		} else {
+			if ($pagePostTitleMeta == 'show') {
+				$showPagePostTitle = true;
+			} else {
+				$showPagePostTitle = false;
+			}
 		}
 
 		$headerBgColor = $this->get_value('header', 'header-background-color', '');
