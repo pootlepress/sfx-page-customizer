@@ -167,7 +167,7 @@ final class SFX_Page_Customizer {
 
 		$customizeManager->add_control(new WP_Customize_Control($customizeManager, 'sfx-pc-show-page-post-title', array(
 			'type' => 'checkbox',
-			'label' => 'Show page/post titles globally',
+			'label' => 'Show page/post and product titles globally',
 			'section' => 'storefront_layout',
 			'settings' => 'sfx-pc-show-page-post-title[checked]',
 			'default' => 1,
@@ -198,19 +198,23 @@ final class SFX_Page_Customizer {
 	public function register_meta_box() {
 		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'post');
 		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'page');
+		
+		//adding Storefront settings in Woocommerce product page
+		add_meta_box( 'sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'product');
 	}
 
 	public function save_post($postID) {
 		$post = get_post($postID);
-
-		if (!in_array($post->post_type, array('post', 'page'))) {
+		 
+		//check if post type is post,page or product
+		if (!in_array($post->post_type, array('post', 'page', 'product'))) {
 			return;
 		}
 
 //		$fields = $this->get_meta_fields();
 
 		//$key = $this->get_meta_key($fields['header-background-color']['section'], 'header-background-color');
-
+		 
 		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
 			$sfxPCValues = $_REQUEST[$this->token];
 
@@ -234,11 +238,22 @@ final class SFX_Page_Customizer {
 	}
 
 	private function get_meta_fields() {
+		global $post;
+		
+		//change label text according to page/post or product
+		if (in_array($post->post_type, array('post', 'page'))) {
+			$label_val = 'Page/post title';
+		}
+		else if(in_array($post->post_type, array('product'))){
+			$label_val = 'Product title';
+		}
+		
+		
 		return array(
 			'page-post-title' => array(
 				'id' => 'page-post-title',
 				'section' => 'header',
-				'label' => 'Page/post title',
+				'label' => $label_val,
 				'type' => 'select',
 				'default' => 'default',
 				'options' => array('default' => 'Global default', 'show' => 'Show', 'hide' => 'Hide')
@@ -445,8 +460,8 @@ final class SFX_Page_Customizer {
 
 	public function option_css() {
 
-		// check is this is single post or page
-		if (!is_singular(array('post', 'page'))) {
+		// check is this is single post or page or product
+		if (!is_singular(array('post', 'page', 'product'))) {
 			return;
 		}
 
@@ -456,6 +471,7 @@ final class SFX_Page_Customizer {
 
 		$showPagePostTitle = null;
 		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default');
+	
 		if ($pagePostTitleMeta == 'default') {
 			$arr = get_option('sfx-pc-show-page-post-title', array('checked' => true));
 			if (is_array($arr) && isset($arr['checked'])) {
