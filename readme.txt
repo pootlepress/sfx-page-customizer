@@ -1,4 +1,4 @@
-=== Storefront Align Menu Right ===
+=== Storefront Page Customizer ===
 Contributors: nickburne
 Plugin Name: Storefront Page Customizer
 Plugin URI:
