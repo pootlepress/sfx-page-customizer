@@ -464,6 +464,10 @@ final class SFX_Page_Customizer {
 		if (!is_singular(array('post', 'page', 'product'))) {
 			return;
 		}
+		
+				global $post;
+		
+		
 
 		$css = '';
 
@@ -491,19 +495,33 @@ final class SFX_Page_Customizer {
 
 		$headerBgColor = $this->get_value('header', 'header-background-color', '');
 		$headerBgImage = $this->get_value('header', 'header-background-image', '');
-
-		if (!$showPagePostTitle) {
-			$css .= '.entry-title { display: none; }';
+		
+		
+		
+		if (in_array($post->post_type, array('post', 'page')) && !$showPagePostTitle) {
+			$css .= '.entry-header { display: none !important; }';
 		}
+		
+		if(in_array($post->post_type, array('product')) && !$showPagePostTitle){
+			$css .= '.entry-title { display: none !important; }';
+		}
+		
+
+		/*if (!$showPagePostTitle) {
+			$css .= '.entry-title { display: none !important; }';
+		}*/
 
 		if ($headerBgColor != '') {
-			$css .= "#masthead { background-color: $headerBgColor; }\n";
+			$css .= "#masthead { background: $headerBgColor !important; }\n";
 		}
 		if ($headerBgImage != '') {
-			$css .= "#masthead { background-image: url('$headerBgImage'); }\n";
+			$css .= "#masthead { background: url('$headerBgImage') !important; }\n";
 		}
-
+	 
+		
 		$css .= "}\n";
+		
+		// echo $css;
 
 		echo "<style>\n";
 		echo $css;
