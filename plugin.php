@@ -243,8 +243,7 @@ final class SFX_Page_Customizer {
 		//change label text according to page/post or product
 		if (in_array($post->post_type, array('post', 'page'))) {
 			$label_val = 'Page/post title';
-		}
-		else if(in_array($post->post_type, array('product'))){
+		} elseif(in_array($post->post_type, array('product'))){
 			$label_val = 'Product title';
 		}
 		
@@ -497,19 +496,11 @@ final class SFX_Page_Customizer {
 		$headerBgImage = $this->get_value('header', 'header-background-image', '');
 		
 		
-		
-		if (in_array($post->post_type, array('post', 'page')) && !$showPagePostTitle) {
-			$css .= '.entry-header { display: none !important; }';
+		//Hiding the title for Post, Products and Page
+		if (in_array($post->post_type, array('post', 'page', 'product')) && !$showPagePostTitle){
+			$css .= '.entry-title { display: none !important; }'
+			  . '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
 		}
-		
-		if(in_array($post->post_type, array('product')) && !$showPagePostTitle){
-			$css .= '.entry-title { display: none !important; }';
-		}
-		
-
-		/*if (!$showPagePostTitle) {
-			$css .= '.entry-title { display: none !important; }';
-		}*/
 
 		if ($headerBgColor != '') {
 			$css .= "#masthead { background: $headerBgColor !important; }\n";
