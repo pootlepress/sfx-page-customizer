@@ -133,7 +133,6 @@ final class SFX_Page_Customizer {
 		$this->plugin_path 		= plugin_dir_path( __FILE__ );
 		$this->version 			= '1.0.0';
 
-		// Post Types - End
 		register_activation_hook( __FILE__, array( $this, 'install' ) );
 
 		add_action('init', array( $this, 'load_plugin_textdomain' ));
@@ -145,6 +144,8 @@ final class SFX_Page_Customizer {
 		add_action('admin_print_scripts', array($this, 'admin_scripts'));
 
 		add_action('wp_head', array($this, 'option_css'));
+
+		add_action('wp_head', array($this, 'option_js'));
 
 		add_action('customize_register', array($this, 'customize_register'));
 
@@ -283,12 +284,13 @@ final class SFX_Page_Customizer {
 		}
 	}
 
-	protected function get_value($section, $id, $default = null) {
-		global $post;
-
+	protected function get_value($section, $id, $default = null, $post_id=false) {
+		//Getting post id if not set
+		if(!$post_id){ global $post; $post_id = $post->ID; }
+		
 		$metaKey = $this->get_meta_key($section, $id);
 
-		$ret = get_post_meta($post->ID, $metaKey, true);
+		$ret = get_post_meta($post_id, $metaKey, true);
 		if (isset($ret) && $ret != false) {
 			return $ret;
 		} else {
@@ -457,23 +459,54 @@ final class SFX_Page_Customizer {
 		return $html;
 	}
 
-	public function option_css() {
-
-		// check is this is single post or page or product
-		if (!is_singular(array('post', 'page', 'product'))) {
-			return;
+	public function option_js() {
+	?>
+<script id='sfx-pc-script'>
+	jQuery(document).ready(function($){
+		<?php
+		if(is_home()){
+			$current_post_id = get_option( 'page_for_posts' );
+			$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post_id);
+			if($pagePostTitleMeta=='show'){
+			?>
+		$('#main')
+			.prepend('<header class="entry-header blog-header"><h1 class="entry-title" itemprop="name"><?php echo get_the_title($current_post_id); ?></h1></header>')
+			.addClass('hentry');
+			<?php
+			}
 		}
-		
-				global $post;
-		
-		
+	?>
+		})
+</script>
+	<?php
+	}
+	
+	public function option_css() {
+		// check is this is single post or page or product or shop
+		if(!is_singular(array('post', 'page', 'product')) && !is_shop() && !is_home()) {
+//			return;
+		}
+
+		global $post;
 
 		$css = '';
-
 		$css .= "@media screen and (min-width: 768px) {\n";
 
 		$showPagePostTitle = null;
-		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default');
+
+		//Meta values for the page
+		if(is_shop()){
+			$current_post = get_option( 'woocommerce_shop_page_id' );
+		}elseif(is_home()){
+			$css .= "#main .hentry {margin: 0; padding-bottom: 0; border-bottom: none;}";
+			$current_post = get_option( 'page_for_posts' );
+		}else{
+			$current_post = false;
+		}
+		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
+		$headerBgColor = $this->get_value('header', 'header-background-color', '');
+		$headerBgImage = $this->get_value('header', 'header-background-image', '');
+
 	
 		if ($pagePostTitleMeta == 'default') {
 			$arr = get_option('sfx-pc-show-page-post-title', array('checked' => true));
@@ -491,15 +524,20 @@ final class SFX_Page_Customizer {
 				$showPagePostTitle = false;
 			}
 		}
-
-		$headerBgColor = $this->get_value('header', 'header-background-color', '');
-		$headerBgImage = $this->get_value('header', 'header-background-image', '');
 		
+		//Hiding the title for Shop Page, Post, Products and Page
+		if(is_shop() && !$showPagePostTitle){
+			$css .= '.page-title { display: none !important; }';
+		}elseif(is_home() && !$showPagePostTitle){
+			$css .= '.blog-header { display: none !important; }';
+		}
+		elseif (in_array($post->post_type, array('post', 'page', 'product')) && !$showPagePostTitle){
+			$css .= '.entry-title { display: none !important; }';
+		}
 		
-		//Hiding the title for Post, Products and Page
-		if (in_array($post->post_type, array('post', 'page', 'product')) && !$showPagePostTitle){
-			$css .= '.entry-title { display: none !important; }'
-			  . '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
+		//Solving negative margin for product rating
+		if (in_array($post->post_type, array('product')) && !$showPagePostTitle){
+			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
 		}
 
 		if ($headerBgColor != '') {
@@ -509,12 +547,10 @@ final class SFX_Page_Customizer {
 			$css .= "#masthead { background: url('$headerBgImage') !important; }\n";
 		}
 	 
-		
 		$css .= "}\n";
 		
-		// echo $css;
-
-		echo "<style>\n";
+		//Echoing the CSS
+		echo "<style id='sfx-pc-styles'>\n";
 		echo $css;
 		echo "</style>\n";
 	}
