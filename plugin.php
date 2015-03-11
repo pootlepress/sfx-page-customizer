@@ -492,7 +492,9 @@ final class SFX_Page_Customizer {
 		global $post;
 
 		$css = '';
-		$css .= "@media screen and (min-width: 768px) {\n";
+		
+		//Removing media query to make options work on all resolutions
+		//$css .= "@media screen and (min-width: 768px) {\n";
 
 		$showPagePostTitle = null;
 
@@ -548,8 +550,9 @@ final class SFX_Page_Customizer {
 		if ($headerBgImage != '') {
 			$css .= "#masthead { background: url('$headerBgImage') !important; }\n";
 		}
-	 
-		$css .= "}\n";
+
+		//Removing media query to make options work on all resolutions
+		//$css .= "}\n";
 		
 		//Echoing the CSS
 		echo "<style id='sfx-pc-styles'>\n";
