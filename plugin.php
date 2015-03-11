@@ -465,6 +465,7 @@ final class SFX_Page_Customizer {
 	jQuery(document).ready(function($){
 		<?php
 		if(is_home()){
+		/*
 			$current_post_id = get_option( 'page_for_posts' );
 			$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post_id);
 			if($pagePostTitleMeta=='show'){
@@ -474,6 +475,7 @@ final class SFX_Page_Customizer {
 			.addClass('hentry');
 			<?php
 			}
+		*/
 		}
 	?>
 		})
