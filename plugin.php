@@ -265,13 +265,6 @@ final class SFX_Page_Customizer {
 				'type' => 'image',
 				'default' => '',
 			),
-			'header-background-color' => array(
-				'id' => 'header-background-color',
-				'section' => 'header',
-				'label' => 'Header background color',
-				'type' => 'color',
-				'default' => '',
-			)
 		);
 	}
 
@@ -492,7 +485,7 @@ final class SFX_Page_Customizer {
 		global $post;
 
 		$css = '';
-		
+
 		//Removing media query to make options work on all resolutions
 		//$css .= "@media screen and (min-width: 768px) {\n";
 
@@ -509,7 +502,6 @@ final class SFX_Page_Customizer {
 		}
 		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
 		$headerBgColor = $this->get_value('header', 'header-background-color', '');
-		$headerBgImage = $this->get_value('header', 'header-background-image', '');
 
 	
 		if ($pagePostTitleMeta == 'default') {
@@ -547,10 +539,6 @@ final class SFX_Page_Customizer {
 		if ($headerBgColor != '') {
 			$css .= "#masthead { background: $headerBgColor !important; }\n";
 		}
-		if ($headerBgImage != '') {
-			$css .= "#masthead { background: url('$headerBgImage') !important; }\n";
-		}
-
 		//Removing media query to make options work on all resolutions
 		//$css .= "}\n";
 		
