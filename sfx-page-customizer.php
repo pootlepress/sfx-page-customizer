@@ -8,13 +8,13 @@
  * Author URI: http://pootlepress.com/
  * Requires at least: 4.0.0
  * Tested up to: 4.1.1
- * 
+ *
  * Text Domain: sfx-page-customizer
  * Domain Path: /languages/
  *
  * @package SFX_Page_Customizer
  * @category Core
- * @author Alan
+ * @author Shramee
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
@@ -26,27 +26,29 @@ if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 if ( ! function_exists( 'woothemes_queue_update' ) ) {
 	require_once( 'woo-includes/woo-functions.php' );
 }
+
 /**
  * Plugin updates
  */
 woothemes_queue_update( plugin_basename( __FILE__ ), 'FILE_ID', 'PRODUCT_ID' );
 // Sold On Woo - End
+ 
+require_once(dirname(__FILE__) . '/includes/class-pootlepress-updater.php');
 
-require_once(dirname(__FILE__) . '/classes/class-pootlepress-updater.php');
-
-add_action('init', 'pp_sfx_pc_updater');
-function pp_sfx_pc_updater()
-{
+/**
+ * Instantiates Pootlepress_Updater
+ */
+function sfxpc_pp_updater(){
 	if (!function_exists('get_plugin_data')) {
 		include(ABSPATH . 'wp-admin/includes/plugin.php');
 	}
 	$data = get_plugin_data(__FILE__);
-	$wptuts_plugin_current_version = $data['Version'];
-	$wptuts_plugin_remote_path = 'http://www.pootlepress.com/?updater=1';
-	$wptuts_plugin_slug = plugin_basename(__FILE__);
-	new Pootlepress_Updater ($wptuts_plugin_current_version, $wptuts_plugin_remote_path, $wptuts_plugin_slug);
+	$sfxpc_plugin_current_version = $data['Version'];
+	$sfxpc_plugin_remote_path = 'http://www.pootlepress.com/?updater=1';
+	$sfxpc_plugin_slug = plugin_basename(__FILE__);
+	new Pootlepress_Updater ($sfxpc_plugin_current_version, $sfxpc_plugin_remote_path, $sfxpc_plugin_slug);
 }
-
+add_action('init', 'sfxpc_pp_updater');
 
 /**
  * Returns the main instance of SFX_Page_Customizer to prevent the need to use globals.
@@ -67,7 +69,7 @@ SFX_Page_Customizer();
  * @version	1.0.0
  * @since 1.0.0
  * @package	SFX_Page_Customizer
- * @author Alan
+ * @author Shramee <shramee.srivastav@gmail.com>
  */
 final class SFX_Page_Customizer {
 	/**
@@ -118,17 +120,15 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 */
 	public $admin;
-
-	/**
+ 
+ 	/**
 	 * The settings object.
 	 * @var     object
 	 * @access  public
 	 * @since   1.0.0
 	 */
 	public $settings;
-	// Admin - End
 
-	// Post Types - Start
 	/**
 	 * The post types we support.
 	 * @var     array
@@ -136,8 +136,14 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 */
 	public $supported_post_types = array();
-	// Post Types - End
 
+	/**
+	 * All the post metas to populate.
+	 * @var     array
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $post_meta = array();
 
 	/**
 	 * Constructor function.
@@ -145,55 +151,192 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	public function __construct () {
+	public function __construct() {
 		$this->token 			= 'sfx-page-customizer';
 		$this->plugin_url 		= plugin_dir_url( __FILE__ );
 		$this->plugin_path 		= plugin_dir_path( __FILE__ );
 		$this->version 			= '1.0.0';
 
 		register_activation_hook( __FILE__, array( $this, 'install' ) );
-		
-		add_action( 'init', array( $this, 'sfxpc_setup' ) );
-		add_action('init', array( $this, 'load_plugin_textdomain' ));
-		
-		//Adds support and docs links
-		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'sfxpc_plugin_links' ) );
-	} // End __construct()
 
-	public function customize_register(WP_Customize_Manager $customizeManager) {
-		$customizeManager->add_setting('sfx-pc-show-page-post-title[checked]', array(
+		add_action( 'init', array( $this, 'sfxpc_load_plugin_textdomain' ) );
+
+		add_action( 'init', array( $this, 'sfxpc_setup' ) );
+
+		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'sfxpc_plugin_links' ) );
+	}
+
+	/**
+	 * Main SFX_Page_Customizer Instance
+	 *
+	 * Ensures only one instance of SFX_Page_Customizer is loaded or can be loaded.
+	 *
+	 * @since 1.0.0
+	 * @static
+	 * @see SFX_Page_Customizer()
+	 * @return Main SFX_Page_Customizer instance
+	 */
+	public static function instance() {
+		if ( is_null( self::$_instance ) )
+			self::$_instance = new self();
+		return self::$_instance;
+	} // End instance()
+
+	/**
+	 * Load the localisation file.
+	 * @access  public
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	public function sfxpc_load_plugin_textdomain() {
+		load_plugin_textdomain( 'sfx-page-customizer', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
+	}
+
+	/**
+	 * Cloning is forbidden.
+	 *
+	 * @since 1.0.0
+	 */
+	public function __clone() {
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), '1.0.0' );
+	}
+
+	/**
+	 * Unserializing instances of this class is forbidden.
+	 *
+	 * @since 1.0.0
+	 */
+	public function __wakeup() {
+		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), '1.0.0' );
+	}
+
+	/**
+	 * Plugin page links
+	 *
+	 * @since  1.0.0
+	 */
+	public function sfxpc_plugin_links( $links ) {
+		$plugin_links = array(
+			'<a href="http://support.woothemes.com/">' . __( 'Support', 'sfx-page-customizer' ) . '</a>',
+			'<a href="http://docs.woothemes.com/document/sfx-page-customizer/">' . __( 'Docs', 'sfx-page-customizer' ) . '</a>',
+		);
+
+		return array_merge( $plugin_links, $links );
+	}
+
+	/**
+	 * Installation.
+	 * Runs on activation. Logs the version number and assigns a notice message to a WordPress option.
+	 * @access  public
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	public function install() {
+		$this->_log_version_number();
+
+		// get theme customizer url
+		$url = admin_url() . 'customize.php?';
+		$url .= 'url=' . urlencode( site_url() . '?storefront-customizer=true' ) ;
+		$url .= '&return=' . urlencode( admin_url() . 'plugins.php' );
+		$url .= '&storefront-customizer=true';
+
+		$notices 		= get_option( 'sfxpc_activation_notice', array() );
+		$notices[]		= sprintf( __( '%sThanks for installing the SFX Page Customizer extension. To get started, visit the %sCustomizer%s.%s %sOpen the Customizer%s', 'sfx-page-customizer' ), '<p>', '<a href="' . esc_url( $url ) . '">', '</a>', '</p>', '<p><a href="' . esc_url( $url ) . '" class="button button-primary">', '</a></p>' );
+
+		update_option( 'sfxpc_activation_notice', $notices );
+	}
+
+	/**
+	 * Log the plugin version number.
+	 * @access  private
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	private function _log_version_number() {
+		// Log the version number.
+		update_option( $this->token . '-version', $this->version );
+	}
+
+	/**
+	 * Setup all the things.
+	 * Only executes if Storefront or a child theme using Storefront as a parent is active and the extension specific filter returns true.
+	 * Child themes can disable this extension using the sfx_page_customizer_enabled filter
+	 * @return void
+	 */
+	public function sfxpc_setup() {
+		$theme = wp_get_theme();
+
+		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
+			//Getting/Setting supported post types
+			$this->get_supported_post_types();
+			$this->get_meta_fields();
+			
+			add_action('admin_init', array($this, 'register_meta_box'));
+			add_action('save_post', array($this, 'save_post'));
+
+			add_action('admin_print_scripts', array($this, 'admin_scripts'));
+			add_action( 'wp_enqueue_scripts', array( $this, 'sfxpc_styles' ), 999 );
+			add_action( 'admin_print_scripts', array( $this, 'sfxpc_script' ), 999 );
+			add_action( 'customize_register', array( $this, 'sfxpc_customize_register' ) );
+			add_action( 'customize_preview_init', array( $this, 'sfxpc_customize_preview_js' ) );
+			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
+			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
+
+			// Hide the 'More' section in the customizer
+			add_filter( 'storefront_customizer_more', '__return_false' );
+		}
+	}
+
+	/**
+	 * Admin notice
+	 * Checks the notice setup in install(). If it exists display it then delete the option so it's not displayed again.
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	public function sfxpc_customizer_notice() {
+		$notices = get_option( 'sfxpc_activation_notice' );
+
+		if ( $notices = get_option( 'sfxpc_activation_notice' ) ) {
+
+			foreach ( $notices as $notice ) {
+				echo '<div class="updated">' . $notice . '</div>';
+			}
+
+			delete_option( 'sfxpc_activation_notice' );
+		}
+	}
+
+	/**
+	 * Customizer Controls and settings
+	 * @param WP_Customize_Manager $wp_customize Theme Customizer object.
+	 */
+	public function sfxpc_customize_register( $wp_customize ) {
+
+		/**
+	     * Add a new section
+	     */
+        $wp_customize->add_section( 'sfxpc_section' , array(
+		    'title'      	=> __( 'SFX Page Customizer', 'sfx-page-customizer' ),
+		    //'description' 	=> __( 'Add a description, if you want to!', 'sfx-page-customizer' ),
+		    'priority'   	=> 55,
+		) );
+
+		/**
+		 * Show Hide Page Post Title
+		 */
+		$wp_customize->add_setting('sfx-pc-show-page-post-title[checked]', array(
 			'type' => 'option',
 			'default' => true
 		));
 
-		$customizeManager->add_control(new WP_Customize_Control($customizeManager, 'sfx-pc-show-page-post-title', array(
+		$wp_customize->add_control(new WP_Customize_Control($wp_customize, 'sfx-pc-show-page-post-title', array(
 			'type' => 'checkbox',
 			'label' => 'Show page/post and product titles globally',
-			'section' => 'storefront_layout',
+			'section' => 'sfxpc_section',
 			'settings' => 'sfx-pc-show-page-post-title[checked]',
 			'default' => 1,
 			'priority' => 1,
 		)));
-	}
-
-	public function admin_scripts() {
-		global $pagenow;
-
-		if (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php')) {
-			return;
-		}
-
-		if (isset($_REQUEST['post-type']) && strtolower($_REQUEST['post_type']) != 'page') {
-			return;
-		}
-
-		// only in post and page create and edit screen
-
-		wp_enqueue_script('wp-color-picker');
-		wp_enqueue_script('admin-script', trailingslashit(plugin_dir_url(__FILE__)) . 'js/admin.js', array('wp-color-picker', 'jquery'));
-
-		wp_enqueue_style('wp-color-picker');
-		wp_enqueue_style('admin-style', trailingslashit(plugin_dir_url(__FILE__)) . 'css/admin.css');
 	}
 
 	public function register_meta_box() {
@@ -211,15 +354,11 @@ final class SFX_Page_Customizer {
 			return;
 		}
 
-//		$fields = $this->get_meta_fields();
-
-		//$key = $this->get_meta_key($fields['header-background-color']['section'], 'header-background-color');
-		 
 		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
 			$sfxPCValues = $_REQUEST[$this->token];
 
 			//Automating the saving of our post metas
-			$all_meta = $this->get_meta_fields();
+			$all_meta = $this->post_meta;
 			foreach($all_meta as $meta){
 				$meta_id = $this->get_meta_key($meta['section'], $meta['id']);
 				$new_val = $sfxPCValues[$meta['section']][$meta['id']];
@@ -237,21 +376,11 @@ final class SFX_Page_Customizer {
 	}
 
 	private function get_meta_fields() {
-		global $post;
-		
-		//change label text according to page/post or product
-		if(in_array($post->post_type, array('product'))){
-			$label_val = 'Product title';
-		}elseif (in_array($post->post_type, $this->supported_post_types)) {
-			$label_val = 'Page/post title';
-		}
-		
-		
-		return array(
+		$this->post_meta = array(
 			'page-post-title' => array(
 				'id' => 'page-post-title',
 				'section' => 'header',
-				'label' => $label_val,
+				'label' => 'Show/Hide title',
 				'type' => 'select',
 				'default' => 'default',
 				'options' => array('default' => 'Global default', 'show' => 'Show', 'hide' => 'Hide')
@@ -289,7 +418,7 @@ final class SFX_Page_Customizer {
 
 	public function meta_box() {
 
-		$fields = $this->get_meta_fields();
+		$fields = $this->post_meta;
 
 		foreach ($fields as $key => $field) {
 			$this->render_field($field);
@@ -362,12 +491,12 @@ final class SFX_Page_Customizer {
 		}
 
 		echo $html;
-	} // End render_field()
+	}
 
 	/**
 	 * Render HTML markup for the "text" field type.
 	 * @access  protected
-	 * @since   6.0.0
+	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
@@ -375,12 +504,12 @@ final class SFX_Page_Customizer {
 	protected function render_field_text ( $key, $args ) {
 		$html = '<input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" size="40" type="text" value="' . esc_attr( $this->get_value( $args['id'], $args['default'], $args['section'] ) ) . '" />' . "\n";
 		return $html;
-	} // End render_field_text()
+	}
 
 	/**
 	 * Render HTML markup for the "radio" field type.
 	 * @access  protected
-	 * @since   6.0.0
+	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
@@ -394,12 +523,12 @@ final class SFX_Page_Customizer {
 			}
 		}
 		return $html;
-	} // End render_field_radio()
+	}
 
 	/**
 	 * Render HTML markup for the "textarea" field type.
 	 * @access  protected
-	 * @since   6.0.0
+	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
@@ -408,12 +537,12 @@ final class SFX_Page_Customizer {
 		// Explore how best to escape this data, as esc_textarea() strips HTML tags, it seems.
 		$html = '<textarea id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" cols="42" rows="5">' . $this->get_value( $args['id'], $args['default'], $args['section'] ) . '</textarea>' . "\n";
 		return $html;
-	} // End render_field_textarea()
+	}
 
 	/**
 	 * Render HTML markup for the "checkbox" field type.
 	 * @access  protected
-	 * @since   6.0.0
+	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
@@ -426,12 +555,12 @@ final class SFX_Page_Customizer {
 		$html .= '</div>';
 
 		return $html;
-	} // End render_field_checkbox()
+	}
 
 	/**
 	 * Render HTML markup for the "select2" field type.
 	 * @access  protected
-	 * @since   6.0.0
+	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
@@ -451,8 +580,16 @@ final class SFX_Page_Customizer {
 		$html .= '</div>';
 		$html .= '</div>';
 		return $html;
-	} // End render_field_select()
+	}
 
+	/**
+	 * Render HTML markup for the "color" field type.
+	 * @access  protected
+	 * @since   1.0
+	 * @param   string $key  The unique ID of this field.
+	 * @param   array $args  Arguments used to construct this field.
+	 * @return  string       HTML markup for the field.
+	 */
 	protected function render_field_color($key, $args) {
 		$html = '';
 		$html .= '<div class="field">';
@@ -462,6 +599,15 @@ final class SFX_Page_Customizer {
 		return $html;
 	}
 
+	
+	/**
+	 * Render HTML markup for the "image" field type.
+	 * @access  protected
+	 * @since   1.0
+	 * @param   string $key  The unique ID of this field.
+	 * @param   array $args  Arguments used to construct this field.
+	 * @return  string       HTML markup for the field.
+	 */
 	protected  function render_field_image($key, $args) {
 		$html = '';
 		$html .= '<div class="field">';
@@ -471,42 +617,22 @@ final class SFX_Page_Customizer {
 		return $html;
 	}
 
-	public function option_js() {
-	?>
-<script id='sfx-pc-script'>
-	jQuery(document).ready(function($){
-		<?php
-		if(is_home()){
-		/*
-			$current_post_id = get_option( 'page_for_posts' );
-			$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post_id);
-			if($pagePostTitleMeta=='show'){
-			?>
-		$('#main')
-			.prepend('<header class="entry-header blog-header"><h1 class="entry-title" itemprop="name"><?php echo get_the_title($current_post_id); ?></h1></header>')
-			.addClass('hentry');
-			<?php
-			}
-		*/
-		}
-	?>
-		})
-</script>
-	<?php
-	}
-	
-	public function option_css() {
-		// check is this is single post or page or product or shop
+	/**
+	 * Enqueue CSS and custom styles.
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	public function sfxpc_styles() {
+		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
+		
+		// check if this is single post or page or product or shop
 		if(!is_singular($this->supported_post_types) && !is_shop() && !is_home()) {
-//			return;
+			return;
 		}
 
 		global $post;
 
 		$css = '';
-
-		//Removing media query to make options work on all resolutions
-		//$css .= "@media screen and (min-width: 768px) {\n";
 
 		$showPagePostTitle = null;
 
@@ -514,7 +640,6 @@ final class SFX_Page_Customizer {
 		if(is_shop()){
 			$current_post = get_option( 'woocommerce_shop_page_id' );
 		}elseif(is_home()){
-			$css .= "#main .hentry {margin: 0; padding-bottom: 0; border-bottom: none;}";
 			$current_post = get_option( 'page_for_posts' );
 		}else{
 			$current_post = false;
@@ -559,171 +684,86 @@ final class SFX_Page_Customizer {
 		}
 
 		if ($headerBgColor) {
-			$css .= "#masthead , .sub-menu , .site-header-cart .widget_shopping_cart { background: $headerBgColor !important; }\n"
-				//Adding dark overlay
-				. ".sub-menu li,.site-header .widget_shopping_cart li, .site-header .widget_shopping_cart p.buttons, .site-header .widget_shopping_cart p.total {background-color: rgba(0, 0, 0, 0.05) !important;}\n";
+			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
+			$css .= "#masthead { background: {$headerBgColor} !important; }"
+				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColorDark} !important; }\n";
 		}
 
 		if($headerLinkColor){
 			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
 		}
-		
+
 		if($headerTextColor){
 			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
 		}
 		
-		//Removing media query to make options work on all resolutions
-		//$css .= "}\n";
-		
-		//Echoing the CSS
-		echo "<style id='sfx-pc-styles'>\n";
-		echo $css;
-		echo "</style>\n";
+		wp_add_inline_style( 'sfxpc-styles', $css );
 	}
 
 	/**
-	 * Main SFX_Page_Customizer Instance
-	 *
-	 * Ensures only one instance of SFX_Page_Customizer is loaded or can be loaded.
-	 *
-	 * @since 1.0.0
-	 * @static
-	 * @see SFX_Page_Customizer()
-	 * @return Main SFX_Page_Customizer instance
-	 */
-	public static function instance () {
-		if ( is_null( self::$_instance ) )
-			self::$_instance = new self();
-		return self::$_instance;
-	} // End instance()
-
-	/**
-	 * Load the localisation file.
-	 * @access  public
+	 * Print custom js
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	public function load_plugin_textdomain() {
-		load_plugin_textdomain( 'sfx-page-customizer', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
-	} // End load_plugin_textdomain()
-
-	/**
-	 * Cloning is forbidden.
-	 *
-	 * @since 1.0.0
-	 */
-	public function __clone () {
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), '1.0.0' );
-	} // End __clone()
-
-	/**
-	 * Unserializing instances of this class is forbidden.
-	 *
-	 * @since 1.0.0
-	 */
-	public function __wakeup () {
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), '1.0.0' );
-	} // End __wakeup()
-
-	/**
-	 * Installation. Runs on activation.
-	 * @access  public
-	 * @since   1.0.0
-	 * @return  void
-	 */
-	public function install () {
-		$this->_log_version_number();
-		
-		// get theme customizer url
-		$url = admin_url() . 'customize.php?';
-		$url .= 'url=' . urlencode( site_url() . '?storefront-customizer=true' ) ;
-		$url .= '&return=' . urlencode( admin_url() . 'plugins.php' );
-		$url .= '&storefront-customizer=true';
-
-		$notices 		= get_option( 'sfxpc_activation_notice', array() );
-		$notices[]		= sprintf( __( '%sThanks for installing the SFX Page Customizer extension. To get started, visit the %sCustomizer%s.%s %sOpen the Customizer%s', 'sfx-page-customizer' ), '<p>', '<a href="' . esc_url( $url ) . '">', '</a>', '</p>', '<p><a href="' . esc_url( $url ) . '" class="button button-primary">', '</a></p>' );
-
-		update_option( 'sfxpc_activation_notice', $notices );
-	} // End install()
-
-	/**
-	 * Log the plugin version number.
-	 * @access  private
-	 * @since   1.0.0
-	 * @return  void
-	 */
-	private function _log_version_number () {
-		// Log the version number.
-		update_option( $this->token . '-version', $this->version );
-	} // End _log_version_number()
-	
-	/**
-	 * Setup all the things.
-	 * Only executes if Storefront or a child theme using Storefront as a parent is active and the extension specific filter returns true.
-	 * Child themes can disable this extension using the sfx_page_customizer_enabled filter
-	 * @return void
-	 */
-	public function sfxpc_setup() {
-		$theme = wp_get_theme();
-		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
-			//Getting/Setting supported post types
-			$this->get_supported_post_types();
-			
-			add_action('admin_init', array($this, 'register_meta_box'));
-			add_action('save_post', array($this, 'save_post'));
-			add_action('admin_print_scripts', array($this, 'admin_scripts'));
-			add_action('wp_head', array($this, 'option_css'));
-			add_action('wp_head', array($this, 'option_js'));
-			add_action('customize_register', array($this, 'customize_register'));
-			//Adds CSS class sfx-page-customizer-active to the body
-			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
-
-			// needs to be hooked to 'wp_loaded', since this is the action that when executed, will filter get_option from customizer
-//			add_action('wp_loaded', array($this, 'get_options'), 100);
-
-//			add_action('wp_loaded', array($this, 'align_menu_right'), 120);
-//			add_action('customize_register', array($this, 'customize_register'));
-			//@TODO add admin notices functionality
-			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
-
-			// Hide the 'More' section in the customizer
-			add_filter( 'storefront_customizer_more', '__return_false' );
+	public function sfxpc_script() {
+	?>
+	<script id='sfx-pc-script'>
+	jQuery(document).ready(function($){
+		<?php
+		if(is_home()){
+		/*
+			$current_post_id = get_option( 'page_for_posts' );
+			$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post_id);
+			if($pagePostTitleMeta=='show'){
+			?>
+		$('#main')
+			.prepend('<header class="entry-header blog-header"><h1 class="entry-title" itemprop="name"><?php echo get_the_title($current_post_id); ?></h1></header>')
+			.addClass('hentry');
+			<?php
+			}
+		*/
 		}
+	?>
+	})
+	</script>
+	<?php
 	}
+
+	/**
+	 * Enqueue Js 
+	 * @global type $pagenow
+	 * @return null
+	 */
+	public function admin_scripts() {
+		global $pagenow;
+
+		if (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php')) {
+			return;
+		}
+
+		if (isset($_REQUEST['post-type']) && strtolower($_REQUEST['post_type']) != 'page') {
+			return;
+		}
+
+		// only in post and page create and edit screen
+
+		wp_enqueue_script('wp-color-picker');
+		wp_enqueue_script('admin-script', trailingslashit($this->plugin_url) . 'assets/js/admin/admin.js', array('wp-color-picker', 'jquery'));
+
+		wp_enqueue_style('wp-color-picker');
+		wp_enqueue_style('admin-style', trailingslashit($this->plugin_url) . 'assets/css/admin/admin.css');
+	}
+
 	
 	/**
-	 * Plugin page links
+	 * Binds JS handlers to make Theme Customizer preview reload changes asynchronously.
 	 *
 	 * @since  1.0.0
 	 */
-	public function sfxpc_plugin_links( $links ) {
-		$plugin_links = array(
-			'<a href="http://support.woothemes.com/">' . __( 'Support', 'sfx-page-customizer' ) . '</a>',
-			'<a href="http://docs.woothemes.com/document/sfx-page-customizer/">' . __( 'Docs', 'sfx-page-customizer' ) . '</a>',
-		);
-
-		return array_merge( $plugin_links, $links );
+	public function sfxpc_customize_preview_js() {
+		wp_enqueue_script( 'sfxpc-customizer', plugins_url( '/assets/js/customizer.min.js', __FILE__ ), array( 'customize-preview' ), '1.1', true );
 	}
 
-	/**
-	 * Admin notice
-	 * Checks the notice setup in install(). If it exists display it then delete the option so it's not displayed again.
-	 * @since   1.0.0
-	 * @return  void
-	 */
-	public function sfxpc_customizer_notice() {
-		$notices = get_option( 'sfxpc_activation_notice' );
-
-		if ( $notices = get_option( 'sfxpc_activation_notice' ) ) {
-
-			foreach ( $notices as $notice ) {
-				echo '<div class="updated">' . $notice . '</div>';
-			}
-
-			delete_option( 'sfxpc_activation_notice' );
-		}
-	}
-	
 	/**
 	 * SFX Page Customizer Body Class
 	 * Adds a class based on the extension name and any relevant settings.
@@ -735,4 +775,3 @@ final class SFX_Page_Customizer {
 	}
 
 } // End Class
-?>
