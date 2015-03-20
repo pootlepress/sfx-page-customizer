@@ -543,7 +543,9 @@ final class SFX_Page_Customizer {
 		}
 
 		if ($headerBgColor != '') {
-			$css .= "#masthead { background: $headerBgColor !important; }\n";
+			$css .= "#masthead { background: $headerBgColor !important; }\n"
+			  . ".sub-menu {background: $headerBgColor !important;}\n"
+			  . ".sub-menu li {background-color: rgba(0, 0, 0, 0.05) !important;}\n";
 		}
 		//Removing media query to make options work on all resolutions
 		//$css .= "}\n";
