@@ -656,7 +656,7 @@ final class SFX_Page_Customizer {
 			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
 
 			// Hide the 'More' section in the customizer
-			//add_filter( 'storefront_customizer_more', '__return_false' );
+			add_filter( 'storefront_customizer_more', '__return_false' );
 		}
 	}
 	
