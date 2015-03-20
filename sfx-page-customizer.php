@@ -130,12 +130,12 @@ final class SFX_Page_Customizer {
 
 	// Post Types - Start
 	/**
-	 * The post types we're registering.
+	 * The post types we support.
 	 * @var     array
 	 * @access  public
 	 * @since   1.0.0
 	 */
-	public $post_types = array();
+	public $supported_post_types = array();
 	// Post Types - End
 
 
@@ -207,7 +207,7 @@ final class SFX_Page_Customizer {
 		$post = get_post($postID);
 		 
 		//check if post type is post,page or product
-		if (!in_array($post->post_type, array('post', 'page', 'product'))) {
+		if (!in_array($post->post_type, $this->supported_post_types)) {
 			return;
 		}
 
@@ -236,15 +236,23 @@ final class SFX_Page_Customizer {
 			}
 		}
 	}
+	
+	private function get_supported_post_types(){
+		$this->supported_post_types = array(
+		  'post',
+		  'page',
+		  'product'
+		);
+	}
 
 	private function get_meta_fields() {
 		global $post;
 		
 		//change label text according to page/post or product
-		if (in_array($post->post_type, array('post', 'page'))) {
-			$label_val = 'Page/post title';
-		} elseif(in_array($post->post_type, array('product'))){
+		if(in_array($post->post_type, array('product'))){
 			$label_val = 'Product title';
+		}elseif (in_array($post->post_type, $this->supported_post_types)) {
+			$label_val = 'Page/post title';
 		}
 		
 		
@@ -484,7 +492,7 @@ final class SFX_Page_Customizer {
 	
 	public function option_css() {
 		// check is this is single post or page or product or shop
-		if(!is_singular(array('post', 'page', 'product')) && !is_shop() && !is_home()) {
+		if(!is_singular($this->supported_post_types) && !is_shop() && !is_home()) {
 //			return;
 		}
 
@@ -533,7 +541,7 @@ final class SFX_Page_Customizer {
 		}elseif(is_home() && !$showPagePostTitle){
 			$css .= '.blog-header { display: none !important; }';
 		}
-		elseif (in_array($post->post_type, array('post', 'page', 'product')) && !$showPagePostTitle){
+		elseif (in_array($post->post_type, $this->supported_post_types) && !$showPagePostTitle){
 			$css .= '.entry-title { display: none !important; }';
 		}
 		
@@ -631,6 +639,7 @@ final class SFX_Page_Customizer {
 		// Log the version number.
 		update_option( $this->token . '-version', $this->version );
 	} // End _log_version_number()
+	
 	/**
 	 * Setup all the things.
 	 * Only executes if Storefront or a child theme using Storefront as a parent is active and the extension specific filter returns true.
@@ -640,6 +649,9 @@ final class SFX_Page_Customizer {
 	public function sfxpc_setup() {
 		$theme = wp_get_theme();
 		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
+			//Getting/Setting supported post types
+			$this->get_supported_post_types();
+			
 			add_action('admin_init', array($this, 'register_meta_box'));
 			add_action('save_post', array($this, 'save_post'));
 			add_action('admin_print_scripts', array($this, 'admin_scripts'));
@@ -694,6 +706,7 @@ final class SFX_Page_Customizer {
 			delete_option( 'sfxpc_activation_notice' );
 		}
 	}
+	
 	/**
 	 * SFX Page Customizer Body Class
 	 * Adds a class based on the extension name and any relevant settings.
