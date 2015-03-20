@@ -218,21 +218,12 @@ final class SFX_Page_Customizer {
 		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
 			$sfxPCValues = $_REQUEST[$this->token];
 
-			if (isset($sfxPCValues['header']) && is_array($sfxPCValues['header'])) {
-				if (isset($sfxPCValues['header']['header-background-color'])) {
-					$value = $sfxPCValues['header']['header-background-color'];
-					update_post_meta($postID, $this->get_meta_key('header', 'header-background-color'), $value);
-				}
-
-				if (isset($sfxPCValues['header']['header-background-image'])) {
-					$value = $sfxPCValues['header']['header-background-image'];
-					update_post_meta($postID, $this->get_meta_key('header', 'header-background-image'), $value);
-				}
-
-				if (isset($sfxPCValues['header']['page-post-title'])) {
-					$value = $sfxPCValues['header']['page-post-title'];
-					update_post_meta($postID, $this->get_meta_key('header', 'page-post-title'), $value);
-				}
+			//Automating the saving of our post metas
+			$all_meta = $this->get_meta_fields();
+			foreach($all_meta as $meta){
+				$meta_id = $this->get_meta_key($meta['section'], $meta['id']);
+				$new_val = $sfxPCValues[$meta['section']][$meta['id']];
+				update_post_meta($postID, $meta_id, $new_val);
 			}
 		}
 	}
@@ -272,12 +263,26 @@ final class SFX_Page_Customizer {
 				'type' => 'image',
 				'default' => '',
 			),
-*/			'header-background-color' => array(
+*/		  'header-background-color' => array(
 				'id' => 'header-background-color',
 				'section' => 'header',
 				'label' => 'Header background color',
 				'type' => 'color',
 				'default' => '',
+			),
+			'header-text-color' => array(
+				'id' => 'header-text-color',
+				'section' => 'header',
+				'label' => 'Header text color',
+				'type' => 'color',
+				'default' => '#5a6567',
+			),
+			'header-link-color' => array(
+				'id' => 'header-link-color',
+				'section' => 'header',
+				'label' => 'Header link color',
+				'type' => 'color',
+				'default' => '#ffffff',
 			)
 		);
 	}
@@ -515,7 +520,9 @@ final class SFX_Page_Customizer {
 			$current_post = false;
 		}
 		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
-		$headerBgColor = $this->get_value('header', 'header-background-color', '');
+		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
+		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
+		$headerTextColor = $this->get_value('header', 'header-text-color', null, $current_post);
 
 	
 		if ($pagePostTitleMeta == 'default') {
@@ -544,17 +551,27 @@ final class SFX_Page_Customizer {
 		elseif (in_array($post->post_type, $this->supported_post_types) && !$showPagePostTitle){
 			$css .= '.entry-title { display: none !important; }';
 		}
+
 		
 		//Solving negative margin for product rating
 		if (in_array($post->post_type, array('product')) && !$showPagePostTitle){
 			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
 		}
 
-		if ($headerBgColor != '') {
-			$css .= "#masthead { background: $headerBgColor !important; }\n"
-			  . ".sub-menu {background: $headerBgColor !important;}\n"
-			  . ".sub-menu li {background-color: rgba(0, 0, 0, 0.05) !important;}\n";
+		if ($headerBgColor) {
+			$css .= "#masthead , .sub-menu , .site-header-cart .widget_shopping_cart { background: $headerBgColor !important; }\n"
+				//Adding dark overlay
+				. ".sub-menu li,.site-header .widget_shopping_cart li, .site-header .widget_shopping_cart p.buttons, .site-header .widget_shopping_cart p.total {background-color: rgba(0, 0, 0, 0.05) !important;}\n";
 		}
+
+		if($headerLinkColor){
+			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
+		}
+		
+		if($headerTextColor){
+			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
+		}
+		
 		//Removing media query to make options work on all resolutions
 		//$css .= "}\n";
 		
