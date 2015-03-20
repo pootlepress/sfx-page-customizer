@@ -1,9 +1,14 @@
 <?php
 /**
  * Plugin Name: Storefront Extension - Page Customizer
+ * Plugin URI: http://woothemes.com/products/sfx-page-customizer/
+ * Description:	@TODO write a description with Nick
  * Version: 1.0.0
  * Author: PootlePress
- *
+ * Author URI: http://pootlepress.com/
+ * Requires at least: 4.0.0
+ * Tested up to: 4.1.1
+ * 
  * Text Domain: sfx-page-customizer
  * Domain Path: /languages/
  *
@@ -13,6 +18,19 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
+
+// Sold On Woo - Start
+/**
+ * Required functions
+ */
+if ( ! function_exists( 'woothemes_queue_update' ) ) {
+	require_once( 'woo-includes/woo-functions.php' );
+}
+/**
+ * Plugin updates
+ */
+woothemes_queue_update( plugin_basename( __FILE__ ), 'FILE_ID', 'PRODUCT_ID' );
+// Sold On Woo - End
 
 require_once(dirname(__FILE__) . '/classes/class-pootlepress-updater.php');
 
@@ -134,30 +152,12 @@ final class SFX_Page_Customizer {
 		$this->version 			= '1.0.0';
 
 		register_activation_hook( __FILE__, array( $this, 'install' ) );
-
+		
+		add_action( 'init', array( $this, 'sfxpc_setup' ) );
 		add_action('init', array( $this, 'load_plugin_textdomain' ));
-
-		add_action('admin_init', array($this, 'register_meta_box'));
-
-		add_action('save_post', array($this, 'save_post'));
-
-		add_action('admin_print_scripts', array($this, 'admin_scripts'));
-
-		add_action('wp_head', array($this, 'option_css'));
-
-		add_action('wp_head', array($this, 'option_js'));
-
-		add_action('customize_register', array($this, 'customize_register'));
-
-		// needs to be hooked to 'wp_loaded', since this is the action that when executed, will filter get_option from customizer
-//		add_action('wp_loaded', array($this, 'get_options'), 100);
-
-//		add_action('wp_loaded', array($this, 'align_menu_right'), 120);
-
-
-
-//		add_action('customize_register', array($this, 'customize_register'));
-
+		
+		//Adds support and docs links
+		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'sfxpc_plugin_links' ) );
 	} // End __construct()
 
 	public function customize_register(WP_Customize_Manager $customizeManager) {
@@ -199,7 +199,6 @@ final class SFX_Page_Customizer {
 	public function register_meta_box() {
 		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'post');
 		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'page');
-		
 		//adding Storefront settings in Woocommerce product page
 		add_meta_box( 'sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'product');
 	}
@@ -258,13 +257,20 @@ final class SFX_Page_Customizer {
 				'default' => 'default',
 				'options' => array('default' => 'Global default', 'show' => 'Show', 'hide' => 'Hide')
 			),
-			'header-background-image' => array(
+/*			'header-background-image' => array(
 				'id' => 'header-background-image',
 				'section' => 'header',
 				'label' => 'Header background image',
 				'type' => 'image',
 				'default' => '',
 			),
+*/			'header-background-color' => array(
+				'id' => 'header-background-color',
+				'section' => 'header',
+				'label' => 'Header background color',
+				'type' => 'color',
+				'default' => '',
+			)
 		);
 	}
 
@@ -600,6 +606,17 @@ final class SFX_Page_Customizer {
 	 */
 	public function install () {
 		$this->_log_version_number();
+		
+		// get theme customizer url
+		$url = admin_url() . 'customize.php?';
+		$url .= 'url=' . urlencode( site_url() . '?storefront-customizer=true' ) ;
+		$url .= '&return=' . urlencode( admin_url() . 'plugins.php' );
+		$url .= '&storefront-customizer=true';
+
+		$notices 		= get_option( 'sfxpc_activation_notice', array() );
+		$notices[]		= sprintf( __( '%sThanks for installing the SFX Page Customizer extension. To get started, visit the %sCustomizer%s.%s %sOpen the Customizer%s', 'sfx-page-customizer' ), '<p>', '<a href="' . esc_url( $url ) . '">', '</a>', '</p>', '<p><a href="' . esc_url( $url ) . '" class="button button-primary">', '</a></p>' );
+
+		update_option( 'sfxpc_activation_notice', $notices );
 	} // End install()
 
 	/**
@@ -612,5 +629,78 @@ final class SFX_Page_Customizer {
 		// Log the version number.
 		update_option( $this->token . '-version', $this->version );
 	} // End _log_version_number()
+	/**
+	 * Setup all the things.
+	 * Only executes if Storefront or a child theme using Storefront as a parent is active and the extension specific filter returns true.
+	 * Child themes can disable this extension using the sfx_page_customizer_enabled filter
+	 * @return void
+	 */
+	public function sfxpc_setup() {
+		$theme = wp_get_theme();
+		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
+			add_action('admin_init', array($this, 'register_meta_box'));
+			add_action('save_post', array($this, 'save_post'));
+			add_action('admin_print_scripts', array($this, 'admin_scripts'));
+			add_action('wp_head', array($this, 'option_css'));
+			add_action('wp_head', array($this, 'option_js'));
+			add_action('customize_register', array($this, 'customize_register'));
+			//Adds CSS class sfx-page-customizer-active to the body
+			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
+
+			// needs to be hooked to 'wp_loaded', since this is the action that when executed, will filter get_option from customizer
+//			add_action('wp_loaded', array($this, 'get_options'), 100);
+
+//			add_action('wp_loaded', array($this, 'align_menu_right'), 120);
+//			add_action('customize_register', array($this, 'customize_register'));
+			//@TODO add admin notices functionality
+			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
+
+			// Hide the 'More' section in the customizer
+			//add_filter( 'storefront_customizer_more', '__return_false' );
+		}
+	}
+	
+	/**
+	 * Plugin page links
+	 *
+	 * @since  1.0.0
+	 */
+	public function sfxpc_plugin_links( $links ) {
+		$plugin_links = array(
+			'<a href="http://support.woothemes.com/">' . __( 'Support', 'sfx-page-customizer' ) . '</a>',
+			'<a href="http://docs.woothemes.com/document/sfx-page-customizer/">' . __( 'Docs', 'sfx-page-customizer' ) . '</a>',
+		);
+
+		return array_merge( $plugin_links, $links );
+	}
+
+	/**
+	 * Admin notice
+	 * Checks the notice setup in install(). If it exists display it then delete the option so it's not displayed again.
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	public function sfxpc_customizer_notice() {
+		$notices = get_option( 'sfxpc_activation_notice' );
+
+		if ( $notices = get_option( 'sfxpc_activation_notice' ) ) {
+
+			foreach ( $notices as $notice ) {
+				echo '<div class="updated">' . $notice . '</div>';
+			}
+
+			delete_option( 'sfxpc_activation_notice' );
+		}
+	}
+	/**
+	 * SFX Page Customizer Body Class
+	 * Adds a class based on the extension name and any relevant settings.
+	 */
+	public function sfxpc_body_class( $classes ) {
+		$classes[] = 'sfx-page-customizer-active';
+
+		return $classes;
+	}
+
 } // End Class
 ?>
