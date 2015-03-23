@@ -376,6 +376,10 @@ final class SFX_Page_Customizer {
 	}
 
 	private function get_meta_fields() {
+		$header_text_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_text_color', apply_filters( 'storefront_default_header_text_color', '#5a6567' ) ) );
+		$header_link_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_link_color', apply_filters( 'storefront_default_header_link_color', '#ffffff' ) ) );
+		$header_background_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_background_color', apply_filters( 'storefront_default_header_background_color', '#2c2d33' ) ) );
+
 		$this->post_meta = array(
 			'page-post-title' => array(
 				'id' => 'page-post-title',
@@ -397,21 +401,21 @@ final class SFX_Page_Customizer {
 				'section' => 'header',
 				'label' => 'Header background color',
 				'type' => 'color',
-				'default' => '',
+				'default' => $header_background_color,
 			),
 			'header-text-color' => array(
 				'id' => 'header-text-color',
 				'section' => 'header',
 				'label' => 'Header text color',
 				'type' => 'color',
-				'default' => '#5a6567',
+				'default' => $header_text_color,
 			),
 			'header-link-color' => array(
 				'id' => 'header-link-color',
 				'section' => 'header',
 				'label' => 'Header link color',
 				'type' => 'color',
-				'default' => '#ffffff',
+				'default' => $header_link_color,
 			)
 		);
 	}
@@ -646,7 +650,7 @@ final class SFX_Page_Customizer {
 		}
 		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
 		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
-		$headerBgImage = $this->get_value('header', 'header-background-image', '');
+		$headerBgImage = $this->get_value('header', 'header-background-image', '', $current_post);
 		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
 		$headerTextColor = $this->get_value('header', 'header-text-color', null, $current_post);
 
@@ -687,7 +691,7 @@ final class SFX_Page_Customizer {
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "#masthead { background: {$headerBgColor} !important; }"
-				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColorDark} !important; }\n";
+				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
 		}
 		if ($headerBgImage != '') {
 			$css .= "#masthead { background: url('$headerBgImage') !important; }\n";
