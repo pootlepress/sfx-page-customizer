@@ -138,6 +138,14 @@ final class SFX_Page_Customizer {
 	public $supported_post_types = array();
 
 	/**
+	 * The taxonomies we support.
+	 * @var     array
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $supported_taxonomies = array();
+
+	/**
 	 * All the post metas to populate.
 	 * @var     array
 	 * @access  public
@@ -269,6 +277,7 @@ final class SFX_Page_Customizer {
 		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
 			//Getting/Setting supported post types
 			$this->get_supported_post_types();
+			$this->get_supported_taxonomies();
 			$this->get_meta_fields();
 			
 			add_action('admin_init', array($this, 'register_meta_box'));
@@ -281,7 +290,13 @@ final class SFX_Page_Customizer {
 			add_action( 'customize_preview_init', array( $this, 'sfxpc_customize_preview_js' ) );
 			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
 			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
-
+			foreach ($this->supported_taxonomies as $tax){
+				add_action( "{$tax}_add_form_fields", array( $this, 'add_term_custom_fields'));
+				add_action( "{$tax}_edit_form_fields", array( $this, 'edit_term_custom_fields' ) );
+				add_action( 'edited_terms', array( $this, 'save_term_fields' ) );
+//				add_action( "{$tax}_add_form_fields", array( $this, 'tax_add_fields' ) );
+//				add_action( "{$tax}_edit_form_fields", array( $this, 'tax_edit_fields' ) );
+			}
 			// Hide the 'More' section in the customizer
 			add_filter( 'storefront_customizer_more', '__return_false' );
 		}
@@ -340,10 +355,10 @@ final class SFX_Page_Customizer {
 	}
 
 	public function register_meta_box() {
-		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'post');
-		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'page');
+		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'custom_fields'), 'post');
+		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'custom_fields'), 'page');
 		//adding Storefront settings in Woocommerce product page
-		add_meta_box( 'sfx-pc-meta-box', 'Storefront settings', array($this, 'meta_box'), 'product');
+		add_meta_box( 'sfx-pc-meta-box', 'Storefront settings', array($this, 'custom_fields'), 'product');
 	}
 
 	public function save_post($postID) {
@@ -372,6 +387,15 @@ final class SFX_Page_Customizer {
 		  'post',
 		  'page',
 		  'product'
+		);
+	}
+	
+	private function get_supported_taxonomies(){
+		$this->supported_taxonomies = array(
+		  'category',
+		  'post_tag',
+		  'product_cat',
+		  'product_tag',
 		);
 	}
 
@@ -434,19 +458,24 @@ final class SFX_Page_Customizer {
 			),
 		);
 	}
-
-	public function meta_box() {
+	public function add_term_custom_fields(){
+		$this->custom_fields('termAdd');
+	}
+	public function edit_term_custom_fields(){
+		$this->custom_fields('termEdit');
+	}
+	public function custom_fields($output_format = 'post' ) {
 
 		$fields = $this->post_meta;
 
 		foreach ($fields as $key => $field) {
-			$this->render_field($field);
+			$this->render_field($field, $output_format);
 		}
 	}
 
 	protected function get_value($section, $id, $default = null, $post_id=false) {
 		//Getting post id if not set
-		if(!$post_id){ global $post; $post_id = $post->ID; }
+		if(!$post_id && isset($post)){ global $post; $post_id = $post->ID; }
 		
 		$metaKey = $this->get_meta_key($section, $id);
 
@@ -602,11 +631,13 @@ final class SFX_Page_Customizer {
 	public function admin_scripts() {
 		global $pagenow;
 
-		if (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php')) {
-			return;
-		}
-
-		if (isset($_REQUEST['post-type']) && strtolower($_REQUEST['post_type']) != 'page') {
+		if($pagenow=='edit-tags.php'){
+			//Don't Return ;)
+		}elseif(
+		  (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php'))
+		  OR
+		  (isset($_REQUEST['post-type']) && strtolower($_REQUEST['post_type']) != 'page')
+		) {
 			return;
 		}
 
@@ -646,8 +677,17 @@ final class SFX_Page_Customizer {
 	 * @param   array $args The field parameters.
 	 * @return  void
 	 */
-	public function render_field ( $args ) {
+	/**
+	 * Render a field of a given type.
+	 * @access public
+	 * @since 1.0.0
+	 * @param array $args The field parameters.
+	 * @param type $output_format = ( post || termEdit || termAdd )
+	 * @return string
+	 */
+	public function render_field ( $args, $output_format = 'post' ) {
 		$html = '';
+
 		if ( ! in_array( $args['type'], array( 'text', 'checkbox', 'radio', 'textarea', 'select', 'color', 'image' ) ) ) return ''; // Supported field type sanity check.
 
 		// Make sure we have some kind of default, if the key isn't set.
@@ -662,26 +702,54 @@ final class SFX_Page_Customizer {
 		}
 
 		// Construct the key.
-		$key 				= $this->get_field_key($args['section'], $args['id']);
-		$method_output 		= $this->$method( $key, $args );
+		$key = $this->get_field_key($args['section'], $args['id']);
 
-		if ( is_wp_error( $method_output ) ) {
-			// if ( defined( 'WP_DEBUG' ) || true == constant( 'WP_DEBUG' ) ) print_r( $method_output ); // Add better error display.
-		} else {
-			$html .= $method_output;
+		switch($output_format){
+			case 'termEdit':
+				$html .= ''
+				. '<tr class="form-field form-required term-name-wrap">'
+				. '<th scope="row"><label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label></th>'
+				. '<td>';
+				break;
+			case 'termAdd':
+				$html .= ''
+				. '<div class="form-field">'
+				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
+				break;
+			default:
+				$html .= ''
+				. '<div class="field">'
+				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>'
+				. '<div class="control">';
 		}
+		
+		//Output the field
+		$method_output = $this->$method( $key, $args );
+		$html .= $method_output;
 
-		// Output the description, if the current field allows it.
-		if ( isset( $args['type'] ) && ! in_array( $args['type'], (array)apply_filters( 'wf_no_description_fields', array( 'checkbox' ) ) ) ) {
-			if ( isset( $args['description'] ) ) {
-				$description = '<p class="description">' . wp_kses_post( $args['description'] ) . '</p>' . "\n";
-				if ( in_array( $args['type'], (array)apply_filters( 'wf_newline_description_fields', array( 'textarea', 'select' ) ) ) ) {
+		// Output the description
+		if ( isset( $args['description'] ) ) {
+			$description = '<p class="description">' . wp_kses_post( $args['description'] ) . '</p>' . "\n";
+			if ( in_array( $args['type'], (array)apply_filters( 'wf_newline_description_fields', array( 'textarea', 'select' ) ) ) ) {
 					$description = wpautop( $description );
 				}
-				$html .= $description;
-			}
+			$html .= $description;
 		}
 
+		switch($output_format){
+			case 'termEdit':
+				$html .= ''
+					. '</td>'
+					. '</tr>';
+				break;
+			case 'termAdd':
+				$html .= '</div>';
+				break;
+			default:
+				$html .= ''
+					. '</div>'
+					. '</div>';
+		}
 		echo $html;
 	}
 
@@ -709,7 +777,6 @@ final class SFX_Page_Customizer {
 	protected function render_field_radio ( $key, $args ) {
 		$html = '';
 		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
-			$html = '';
 			foreach ( $args['options'] as $k => $v ) {
 				$html .= '<input type="radio" name="' . esc_attr( $key ) . '" value="' . esc_attr( $k ) . '"' . checked( esc_attr( $this->get_value( $args['id'], $args['default'], $args['section'] ) ), $k, false ) . ' /> ' . esc_html( $v ) . '<br />' . "\n";
 			}
@@ -726,7 +793,6 @@ final class SFX_Page_Customizer {
 	 * @return  string       HTML markup for the field.
 	 */
 	protected function render_field_textarea ( $key, $args ) {
-		// Explore how best to escape this data, as esc_textarea() strips HTML tags, it seems.
 		$html = '<textarea id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" cols="42" rows="5">' . $this->get_value( $args['id'], $args['default'], $args['section'] ) . '</textarea>' . "\n";
 		return $html;
 	}
@@ -740,17 +806,12 @@ final class SFX_Page_Customizer {
 	 * @return  string       HTML markup for the field.
 	 */
 	protected function render_field_checkbox ( $key, $args ) {
-		$html = '';
-		$html .= '<div class="field">';
-		$html .= '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
-		$html .= '<div class="control"><input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="checkbox" value="true" ' . checked($this->get_value($args['section'], $args['id'], $args['default']), 'checked', false ) . ' /></div>';
-		$html .= '</div>';
-
+		$html = '<input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="checkbox" value="true" ' . checked($this->get_value($args['section'], $args['id'], $args['default']), 'checked', false ) . ' />';
 		return $html;
 	}
 
 	/**
-	 * Render HTML markup for the "select2" field type.
+	 * Render HTML markup for the "select" field type.
 	 * @access  protected
 	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
@@ -759,9 +820,6 @@ final class SFX_Page_Customizer {
 	 */
 	protected function render_field_select ( $key, $args ) {
 		$html = '';
-		$html .= '<div class="field">';
-		$html .= '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
-		$html .= '<div class="control">';
 		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
 			$html .= '<select id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '">' . "\n";
 			foreach ( $args['options'] as $k => $v ) {
@@ -769,8 +827,6 @@ final class SFX_Page_Customizer {
 			}
 			$html .= '</select>' . "\n";
 		}
-		$html .= '</div>';
-		$html .= '</div>';
 		return $html;
 	}
 
@@ -783,11 +839,7 @@ final class SFX_Page_Customizer {
 	 * @return  string       HTML markup for the field.
 	 */
 	protected function render_field_color($key, $args) {
-		$html = '';
-		$html .= '<div class="field">';
-		$html .= '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
-		$html .= '<div class="control"><input class="color-picker-hex" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="text" value="' . esc_attr( $this->get_value($args['section'], $args['id'], $args['default']) ) . '" /></div>';
-		$html .= '</div>';
+		$html = '<input class="color-picker-hex" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="text" value="' . esc_attr( $this->get_value($args['section'], $args['id'], $args['default']) ) . '" />';
 		return $html;
 	}
 
@@ -800,11 +852,7 @@ final class SFX_Page_Customizer {
 	 * @return  string       HTML markup for the field.
 	 */
 	protected  function render_field_image($key, $args) {
-		$html = '';
-		$html .= '<div class="field">';
-		$html .= '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
-		$html .= '<div class="control"><input class="image-upload-path" type="text" id="' . esc_attr($key) . '" name="' . esc_attr($key) . '" value="' . esc_attr($this->get_value($args['section'], $args['id'], $args['default'])) . '" /><button class="button upload-button">Upload</button></div>';
-		$html .= '</div>';
+		$html = '<input class="image-upload-path" type="text" id="' . esc_attr($key) . '" name="' . esc_attr($key) . '" value="' . esc_attr($this->get_value($args['section'], $args['id'], $args['default'])) . '" /><button class="button upload-button">Upload</button>';
 		return $html;
 	}
 
