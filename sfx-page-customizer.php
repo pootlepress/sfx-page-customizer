@@ -382,12 +382,10 @@ final class SFX_Page_Customizer {
 	}
 
 	public function save_term_fields($ID) {
-
 		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
 			$setting_name = $this->token.'-cat'.$ID;
 			$sfxPCValues = $_REQUEST[$this->token];
-			add_option($setting_name, $sfxPCValues);
-			update_post_meta($postID, $meta_id, $new_val);
+			update_option($setting_name, $sfxPCValues);
 		}
 	}
 
@@ -541,6 +539,12 @@ final class SFX_Page_Customizer {
 	public function sfxpc_styles() {
 		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
 		
+		//Check if it is a supported taxonomy term archive
+		if(is_tax($this->supported_taxonomies)){
+			$css = $this->sfxpc_tax_styles();
+			wp_add_inline_style( 'sfxpc-styles', $css );
+		}
+		
 		// check if this is single post or page or product or shop
 		if(!is_singular($this->supported_post_types) && !is_shop() && !is_home()) {
 			return;
@@ -632,6 +636,49 @@ final class SFX_Page_Customizer {
 		wp_add_inline_style( 'sfxpc-styles', $css );
 	}
 
+	public function sfxpc_tax_styles(){
+		$term = get_queried_object();
+		$setting_name = $this->token. '-cat' . $term->term_id;
+		$tax_data = get_option($setting_name);
+		
+		if(!$tax_data)return;
+		
+		// $pagePostTitleMeta= $tax_data['header']['color'];
+		$headerBgColor = $tax_data['header']['header-background-color'];
+		$headerBgImage = $tax_data['header']['header-background-image'];
+		$headerTextColor = $tax_data['header']['header-text-color'];
+		$headerLinkColor = $tax_data['header']['header-link-color'];
+		$BgImage = $tax_data['body']['background-image'];
+		$BgColor  = $tax_data['body']['background-color'];
+		
+		$css = '';
+		if ($headerBgColor) {
+			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
+			$css .= "#masthead { background-color: {$headerBgColor} !important; }"
+				. ".sub-menu , .site-header-cart .widget_shopping_cart { background-color: {$headerBgColor} !important; }\n";
+		}
+
+		if ($headerBgImage) {
+			$css .= "#masthead { background-image: url('$headerBgImage') !important; }\n";
+		}
+
+		if($headerLinkColor){
+			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
+		}
+
+		if($headerTextColor){
+			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
+		}
+		
+		if ($BgColor) {
+			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
+			$css .= "body.sfx-page-customizer-active { background-color: {$BgColor} !important; }";
+		}
+		if ($BgImage) {
+			$css .= "body.sfx-page-customizer-active { background-image: url('$BgImage') !important; }\n";
+		}
+		return $css;
+	}
 	/**
 	 * Print custom js
 	 * @since   1.0.0
