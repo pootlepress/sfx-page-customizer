@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Storefront Extension - Page Customizer
  * Plugin URI: http://woothemes.com/products/sfx-page-customizer/
- * Description:	@TODO write a description with Nick
+ * Description:	Customize options per page, post and product. Show/hide titles, header background image and color, background image or color and more. Also control options on a taxonomy level (tags and categories for pages, posts and products).
  * Version: 1.0.0
  * Author: PootlePress
  * Author URI: http://pootlepress.com/
@@ -14,7 +14,7 @@
  *
  * @package SFX_Page_Customizer
  * @category Core
- * @author Shramee
+ * @author PootlePress
  */
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
@@ -69,7 +69,7 @@ SFX_Page_Customizer();
  * @version	1.0.0
  * @since 1.0.0
  * @package	SFX_Page_Customizer
- * @author Shramee <shramee.srivastav@gmail.com>
+ * @author PootlePress
  */
 final class SFX_Page_Customizer {
 	/**
@@ -379,6 +379,7 @@ final class SFX_Page_Customizer {
 		$header_text_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_text_color', apply_filters( 'storefront_default_header_text_color', '#5a6567' ) ) );
 		$header_link_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_link_color', apply_filters( 'storefront_default_header_link_color', '#ffffff' ) ) );
 		$header_background_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_background_color', apply_filters( 'storefront_default_header_background_color', '#2c2d33' ) ) );
+		$background_color = '#'.get_background_color();
 
 		$this->post_meta = array(
 			'page-post-title' => array(
@@ -416,7 +417,21 @@ final class SFX_Page_Customizer {
 				'label' => 'Header link color',
 				'type' => 'color',
 				'default' => $header_link_color,
-			)
+			),
+			'background-image' => array(
+				'id' => 'background-image',
+				'section' => 'body',
+				'label' => 'Page background image',
+				'type' => 'image',
+				'default' => '',
+			),
+		  'background-color' => array(
+				'id' => 'background-color',
+				'section' => 'body',
+				'label' => 'Page background color',
+				'type' => 'color',
+				'default' => $background_color,
+			),
 		);
 	}
 
@@ -449,6 +464,179 @@ final class SFX_Page_Customizer {
 
 	private function get_field_key($section, $id) {
 		return $this->token . '[' . $section . '][' . $id . ']';
+	}
+
+	/**
+	 * Enqueue CSS and custom styles.
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	public function sfxpc_styles() {
+		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
+		
+		// check if this is single post or page or product or shop
+		if(!is_singular($this->supported_post_types) && !is_shop() && !is_home()) {
+			return;
+		}
+
+		global $post;
+
+		$css = '';
+
+		$showPagePostTitle = null;
+
+		//Meta values for the page
+		if(is_shop()){
+			$current_post = get_option( 'woocommerce_shop_page_id' );
+		}elseif(is_home()){
+			$current_post = get_option( 'page_for_posts' );
+		}else{
+			$current_post = false;
+		}
+		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
+		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
+		$headerBgImage = $this->get_value('header', 'header-background-image', null, $current_post);
+		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
+		$headerTextColor = $this->get_value('header', 'header-text-color', null, $current_post);
+		$BgColor = $this->get_value('body', 'background-color', null, $current_post);
+		$BgImage = $this->get_value('body', 'background-image', null, $current_post);
+
+	
+		if ($pagePostTitleMeta == 'default') {
+			$arr = get_option('sfx-pc-show-page-post-title', array('checked' => true));
+			if (is_array($arr) && isset($arr['checked'])) {
+				$showPagePostTitleGlobally = $arr['checked'] == true;
+			} else {
+				$showPagePostTitleGlobally = false;
+			}
+
+			$showPagePostTitle = $showPagePostTitleGlobally;
+		} else {
+			if ($pagePostTitleMeta == 'show') {
+				$showPagePostTitle = true;
+			} else {
+				$showPagePostTitle = false;
+			}
+		}
+		
+		//Hiding the title for Shop Page, Post, Products and Page
+		if(is_shop() && !$showPagePostTitle){
+			$css .= '.page-title { display: none !important; }';
+		}elseif(is_home() && !$showPagePostTitle){
+			$css .= '.blog-header { display: none !important; }';
+		}
+		elseif (in_array($post->post_type, $this->supported_post_types) && !$showPagePostTitle){
+			$css .= '.entry-title { display: none !important; }';
+		}
+
+		$css .= "";
+
+		//Solving negative margin for product rating
+		if (in_array($post->post_type, array('product')) && !$showPagePostTitle){
+			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
+		}
+		
+		if ($headerBgColor) {
+			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
+			$css .= "#masthead { background: {$headerBgColor} !important; }"
+				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
+		}
+
+		if ($headerBgImage) {
+			$css .= "#masthead { background: url('$headerBgImage') !important; }\n";
+		}
+
+		if($headerLinkColor){
+			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
+		}
+
+		if($headerTextColor){
+			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
+		}
+		
+		if ($BgColor) {
+			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
+			$css .= "body.sfx-page-customizer-active { background-color: {$BgColor} !important; }";
+		}
+		if ($BgImage) {
+			$css .= "body.sfx-page-customizer-active { background-image: url('$BgImage') !important; }\n";
+		}
+
+		wp_add_inline_style( 'sfxpc-styles', $css );
+	}
+
+	/**
+	 * Print custom js
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	public function sfxpc_script() {
+	?>
+	<script id='sfx-pc-script'>
+	jQuery(document).ready(function($){
+		<?php
+		if(is_home()){
+		/*
+			$current_post_id = get_option( 'page_for_posts' );
+			$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post_id);
+			if($pagePostTitleMeta=='show'){
+			?>
+		$('#main')
+			.prepend('<header class="entry-header blog-header"><h1 class="entry-title" itemprop="name"><?php echo get_the_title($current_post_id); ?></h1></header>')
+			.addClass('hentry');
+			<?php
+			}
+		*/
+		}
+	?>
+	})
+	</script>
+	<?php
+	}
+
+	/**
+	 * Enqueue Js 
+	 * @global type $pagenow
+	 * @return null
+	 */
+	public function admin_scripts() {
+		global $pagenow;
+
+		if (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php')) {
+			return;
+		}
+
+		if (isset($_REQUEST['post-type']) && strtolower($_REQUEST['post_type']) != 'page') {
+			return;
+		}
+
+		// only in post and page create and edit screen
+
+		wp_enqueue_script('wp-color-picker');
+		wp_enqueue_script('admin-script', trailingslashit($this->plugin_url) . 'assets/js/admin/admin.js', array('wp-color-picker', 'jquery'));
+
+		wp_enqueue_style('wp-color-picker');
+		wp_enqueue_style('admin-style', trailingslashit($this->plugin_url) . 'assets/css/admin/admin.css');
+	}
+
+	
+	/**
+	 * Binds JS handlers to make Theme Customizer preview reload changes asynchronously.
+	 *
+	 * @since  1.0.0
+	 */
+	public function sfxpc_customize_preview_js() {
+		wp_enqueue_script( 'sfxpc-customizer', plugins_url( '/assets/js/customizer.min.js', __FILE__ ), array( 'customize-preview' ), '1.1', true );
+	}
+
+	/**
+	 * SFX Page Customizer Body Class
+	 * Adds a class based on the extension name and any relevant settings.
+	 */
+	public function sfxpc_body_class( $classes ) {
+		$classes[] = 'sfx-page-customizer-active';
+
+		return $classes;
 	}
 
 	/**
@@ -603,7 +791,6 @@ final class SFX_Page_Customizer {
 		return $html;
 	}
 
-	
 	/**
 	 * Render HTML markup for the "image" field type.
 	 * @access  protected
@@ -619,167 +806,6 @@ final class SFX_Page_Customizer {
 		$html .= '<div class="control"><input class="image-upload-path" type="text" id="' . esc_attr($key) . '" name="' . esc_attr($key) . '" value="' . esc_attr($this->get_value($args['section'], $args['id'], $args['default'])) . '" /><button class="button upload-button">Upload</button></div>';
 		$html .= '</div>';
 		return $html;
-	}
-
-	/**
-	 * Enqueue CSS and custom styles.
-	 * @since   1.0.0
-	 * @return  void
-	 */
-	public function sfxpc_styles() {
-		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
-		
-		// check if this is single post or page or product or shop
-		if(!is_singular($this->supported_post_types) && !is_shop() && !is_home()) {
-			return;
-		}
-
-		global $post;
-
-		$css = '';
-
-		$showPagePostTitle = null;
-
-		//Meta values for the page
-		if(is_shop()){
-			$current_post = get_option( 'woocommerce_shop_page_id' );
-		}elseif(is_home()){
-			$current_post = get_option( 'page_for_posts' );
-		}else{
-			$current_post = false;
-		}
-		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
-		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
-		$headerBgImage = $this->get_value('header', 'header-background-image', '', $current_post);
-		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
-		$headerTextColor = $this->get_value('header', 'header-text-color', null, $current_post);
-
-	
-		if ($pagePostTitleMeta == 'default') {
-			$arr = get_option('sfx-pc-show-page-post-title', array('checked' => true));
-			if (is_array($arr) && isset($arr['checked'])) {
-				$showPagePostTitleGlobally = $arr['checked'] == true;
-			} else {
-				$showPagePostTitleGlobally = false;
-			}
-
-			$showPagePostTitle = $showPagePostTitleGlobally;
-		} else {
-			if ($pagePostTitleMeta == 'show') {
-				$showPagePostTitle = true;
-			} else {
-				$showPagePostTitle = false;
-			}
-		}
-		
-		//Hiding the title for Shop Page, Post, Products and Page
-		if(is_shop() && !$showPagePostTitle){
-			$css .= '.page-title { display: none !important; }';
-		}elseif(is_home() && !$showPagePostTitle){
-			$css .= '.blog-header { display: none !important; }';
-		}
-		elseif (in_array($post->post_type, $this->supported_post_types) && !$showPagePostTitle){
-			$css .= '.entry-title { display: none !important; }';
-		}
-
-		
-		//Solving negative margin for product rating
-		if (in_array($post->post_type, array('product')) && !$showPagePostTitle){
-			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
-		}
-
-		if ($headerBgColor) {
-			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
-			$css .= "#masthead { background: {$headerBgColor} !important; }"
-				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
-		}
-		if ($headerBgImage != '') {
-			$css .= "#masthead { background: url('$headerBgImage') !important; }\n";
-		}
-
-		if($headerLinkColor){
-			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
-		}
-
-		if($headerTextColor){
-			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
-		}
-		
-		wp_add_inline_style( 'sfxpc-styles', $css );
-	}
-
-	/**
-	 * Print custom js
-	 * @since   1.0.0
-	 * @return  void
-	 */
-	public function sfxpc_script() {
-	?>
-	<script id='sfx-pc-script'>
-	jQuery(document).ready(function($){
-		<?php
-		if(is_home()){
-		/*
-			$current_post_id = get_option( 'page_for_posts' );
-			$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post_id);
-			if($pagePostTitleMeta=='show'){
-			?>
-		$('#main')
-			.prepend('<header class="entry-header blog-header"><h1 class="entry-title" itemprop="name"><?php echo get_the_title($current_post_id); ?></h1></header>')
-			.addClass('hentry');
-			<?php
-			}
-		*/
-		}
-	?>
-	})
-	</script>
-	<?php
-	}
-
-	/**
-	 * Enqueue Js 
-	 * @global type $pagenow
-	 * @return null
-	 */
-	public function admin_scripts() {
-		global $pagenow;
-
-		if (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php')) {
-			return;
-		}
-
-		if (isset($_REQUEST['post-type']) && strtolower($_REQUEST['post_type']) != 'page') {
-			return;
-		}
-
-		// only in post and page create and edit screen
-
-		wp_enqueue_script('wp-color-picker');
-		wp_enqueue_script('admin-script', trailingslashit($this->plugin_url) . 'assets/js/admin/admin.js', array('wp-color-picker', 'jquery'));
-
-		wp_enqueue_style('wp-color-picker');
-		wp_enqueue_style('admin-style', trailingslashit($this->plugin_url) . 'assets/css/admin/admin.css');
-	}
-
-	
-	/**
-	 * Binds JS handlers to make Theme Customizer preview reload changes asynchronously.
-	 *
-	 * @since  1.0.0
-	 */
-	public function sfxpc_customize_preview_js() {
-		wp_enqueue_script( 'sfxpc-customizer', plugins_url( '/assets/js/customizer.min.js', __FILE__ ), array( 'customize-preview' ), '1.1', true );
-	}
-
-	/**
-	 * SFX Page Customizer Body Class
-	 * Adds a class based on the extension name and any relevant settings.
-	 */
-	public function sfxpc_body_class( $classes ) {
-		$classes[] = 'sfx-page-customizer-active';
-
-		return $classes;
 	}
 
 } // End Class
