@@ -5,7 +5,7 @@
 
     $(document).ready(function () {
 
-        $('#sfx-pc-meta-box .color-picker-hex').wpColorPicker({
+        $('.sfxpc-field .color-picker-hex').wpColorPicker({
             //change: function() {
             //    var $pickerHex =
             //    control.setting.set( picker.val() );
@@ -15,7 +15,7 @@
             //}
         });
 
-        $('#sfx-pc-meta-box .upload-button').click(function () {
+        $('.sfxpc-field .upload-button').click(function () {
 
             var $textField = $(this).parent().find('input');
 

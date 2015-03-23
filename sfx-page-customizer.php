@@ -293,9 +293,7 @@ final class SFX_Page_Customizer {
 			foreach ($this->supported_taxonomies as $tax){
 				add_action( "{$tax}_add_form_fields", array( $this, 'add_term_custom_fields'));
 				add_action( "{$tax}_edit_form_fields", array( $this, 'edit_term_custom_fields' ) );
-				add_action( 'edited_terms', array( $this, 'save_term_fields' ) );
-//				add_action( "{$tax}_add_form_fields", array( $this, 'tax_add_fields' ) );
-//				add_action( "{$tax}_edit_form_fields", array( $this, 'tax_edit_fields' ) );
+				add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
 			}
 			// Hide the 'More' section in the customizer
 			add_filter( 'storefront_customizer_more', '__return_false' );
@@ -381,7 +379,24 @@ final class SFX_Page_Customizer {
 			}
 		}
 	}
-	
+
+	public function save_term_fields($var1, $var2) {
+
+		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
+			$sfxPCValues = $_REQUEST[$this->token];
+			//@TODO make it save stuff in DB
+/*
+			//Automating the saving of our post metas
+			$all_meta = $this->post_meta;
+			foreach($all_meta as $meta){
+				$meta_id = $this->get_meta_key($meta['section'], $meta['id']);
+				$new_val = $sfxPCValues[$meta['section']][$meta['id']];
+				update_post_meta($postID, $meta_id, $new_val);
+			}
+*/
+		}
+	}
+
 	private function get_supported_post_types(){
 		$this->supported_post_types = array(
 		  'post',
@@ -400,10 +415,15 @@ final class SFX_Page_Customizer {
 	}
 
 	private function get_meta_fields() {
-		$header_text_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_text_color', apply_filters( 'storefront_default_header_text_color', '#5a6567' ) ) );
-		$header_link_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_link_color', apply_filters( 'storefront_default_header_link_color', '#ffffff' ) ) );
-		$header_background_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_background_color', apply_filters( 'storefront_default_header_background_color', '#2c2d33' ) ) );
-		$background_color = '#'.get_background_color();
+	//	$header_text_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_text_color', apply_filters( 'storefront_default_header_text_color', '#5a6567' ) ) );
+	//	$header_link_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_link_color', apply_filters( 'storefront_default_header_link_color', '#ffffff' ) ) );
+	//	$header_background_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_background_color', apply_filters( 'storefront_default_header_background_color', '#2c2d33' ) ) );
+	//	$background_color = '#'.get_background_color();
+
+		$header_text_color = '';
+		$header_link_color = '';
+		$header_background_color = '';
+		$background_color = '';
 
 		$this->post_meta = array(
 			'page-post-title' => array(
@@ -632,7 +652,8 @@ final class SFX_Page_Customizer {
 		global $pagenow;
 
 		if($pagenow=='edit-tags.php'){
-			//Don't Return ;)
+			//wp_enqueue_script('wp-color-picker');
+			//wp_enqueue_script('sfxpc-tax-script', trailingslashit($this->plugin_url) . 'assets/js/admin/taxonomy.js', array('wp-color-picker', 'thickbox', 'jquery'));
 		}elseif(
 		  (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php'))
 		  OR
@@ -644,10 +665,11 @@ final class SFX_Page_Customizer {
 		// only in post and page create and edit screen
 
 		wp_enqueue_script('wp-color-picker');
-		wp_enqueue_script('admin-script', trailingslashit($this->plugin_url) . 'assets/js/admin/admin.js', array('wp-color-picker', 'jquery'));
+		wp_enqueue_script('sfxpc-admin-script', trailingslashit($this->plugin_url) . 'assets/js/admin/admin.js', array('wp-color-picker', 'jquery', 'thickbox'));
 
 		wp_enqueue_style('wp-color-picker');
-		wp_enqueue_style('admin-style', trailingslashit($this->plugin_url) . 'assets/css/admin/admin.css');
+		wp_enqueue_style('thickbox');
+		wp_enqueue_style('sfxpc-admin-style', trailingslashit($this->plugin_url) . 'assets/css/admin/admin.css');
 	}
 
 	
@@ -670,13 +692,6 @@ final class SFX_Page_Customizer {
 		return $classes;
 	}
 
-	/**
-	 * Render a field of a given type.
-	 * @access  public
-	 * @since   1.0.0
-	 * @param   array $args The field parameters.
-	 * @return  void
-	 */
 	/**
 	 * Render a field of a given type.
 	 * @access public
@@ -706,19 +721,21 @@ final class SFX_Page_Customizer {
 
 		switch($output_format){
 			case 'termEdit':
+				if($args['id'] == 'page-post-title')return;
 				$html .= ''
-				. '<tr class="form-field form-required term-name-wrap">'
+				. '<tr class="form-field sfxpc-field">'
 				. '<th scope="row"><label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label></th>'
 				. '<td>';
 				break;
 			case 'termAdd':
+				if($args['id'] == 'page-post-title')return;
 				$html .= ''
-				. '<div class="form-field">'
+				. '<div class="form-field sfxpc-field">'
 				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
 				break;
 			default:
 				$html .= ''
-				. '<div class="field">'
+				. '<div class="field sfxpc-field">'
 				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>'
 				. '<div class="control">';
 		}
