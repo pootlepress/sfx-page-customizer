@@ -385,14 +385,14 @@ final class SFX_Page_Customizer {
 				'default' => 'default',
 				'options' => array('default' => 'Global default', 'show' => 'Show', 'hide' => 'Hide')
 			),
-/*			'header-background-image' => array(
+			'header-background-image' => array(
 				'id' => 'header-background-image',
 				'section' => 'header',
 				'label' => 'Header background image',
 				'type' => 'image',
 				'default' => '',
 			),
-*/		  'header-background-color' => array(
+		  'header-background-color' => array(
 				'id' => 'header-background-color',
 				'section' => 'header',
 				'label' => 'Header background color',
@@ -646,6 +646,7 @@ final class SFX_Page_Customizer {
 		}
 		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
 		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
+		$headerBgImage = $this->get_value('header', 'header-background-image', '');
 		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
 		$headerTextColor = $this->get_value('header', 'header-text-color', null, $current_post);
 
@@ -687,6 +688,9 @@ final class SFX_Page_Customizer {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "#masthead { background: {$headerBgColor} !important; }"
 				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColorDark} !important; }\n";
+		}
+		if ($headerBgImage != '') {
+			$css .= "#masthead { background: url('$headerBgImage') !important; }\n";
 		}
 
 		if($headerLinkColor){
