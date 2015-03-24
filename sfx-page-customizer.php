@@ -291,10 +291,10 @@ final class SFX_Page_Customizer {
 			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
 			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
 			foreach ($this->supported_taxonomies as $tax){
-				add_action( "{$tax}_add_form_fields", array( $this, 'tax_custom_fields'));
+				//add_action( "{$tax}_add_form_fields", array( $this, 'tax_custom_fields'));
 				add_action( "{$tax}_edit_form_fields", array( $this, 'tax_custom_fields' ) );
+				//add_action( 'create_terms', array( $this, 'save_term_fields' ) );
 				add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
-				add_action( 'create_terms', array( $this, 'save_term_fields' ) );
 			}
 			// Hide the 'More' section in the customizer
 			add_filter( 'storefront_customizer_more', '__return_false' );
@@ -609,7 +609,7 @@ final class SFX_Page_Customizer {
 		
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
-			$css .= "#masthead { background-color: {$headerBgColor} !important; }"
+			$css .= "#masthead { background: {$headerBgColor} !important; }"
 				. ".sub-menu , .site-header-cart .widget_shopping_cart { background-color: {$headerBgColor} !important; }\n";
 		}
 
@@ -654,7 +654,7 @@ final class SFX_Page_Customizer {
 		$css = '';
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
-			$css .= "#masthead { background-color: {$headerBgColor} !important; }"
+			$css .= "#masthead { background: {$headerBgColor} !important; }"
 				. ".sub-menu , .site-header-cart .widget_shopping_cart { background-color: {$headerBgColor} !important; }\n";
 		}
 
@@ -958,7 +958,7 @@ final class SFX_Page_Customizer {
 	 * @return  string       HTML markup for the field.
 	 */
 	protected  function render_field_image( $key, $args, $current_val=null ) {
-		$html = '<input class="image-upload-path" type="text" id="' . esc_attr($key) . '" name="' . esc_attr($key) . '" value="' . esc_attr( $current_val ) . '" /><button class="button upload-button">Upload</button>';
+		$html = '<input class="image-upload-path" type="text" id="' . esc_attr($key) . '" style="width: 200px; max-width: 100%;" name="' . esc_attr($key) . '" value="' . esc_attr( $current_val ) . '" /><button class="button upload-button">Upload</button>';
 		return $html;
 	}
 
