@@ -4,6 +4,14 @@
 (function ($) {
 
     $(document).ready(function () {
+		//Hiding background customizing options if .sfxpc-field.background-image .image-upload-path is blank
+		$bg_url = $('.sfxpc-field.background-image .image-upload-path');
+		$bg_options = $('.sfxpc-field.background-repeat, .sfxpc-field.background-position, .sfxpc-field.background-attachment');
+
+		if($bg_url.val() == ''){
+			$bg_options.hide(0);
+		}
+		
 
         $('.sfxpc-field .color-picker-hex').wpColorPicker({
             //change: function() {
@@ -57,6 +65,8 @@
                     //console.log(window.sfxPCMetaBoxUploadField);
                     //console.log(itemurl);
                     window.sfxPCMetaBoxUploadField.val(itemurl);
+					$bg_options.show(0);
+					
                     //console.log(window.sfxPCMetaBoxUploadField.val());
 
                     tb_remove();

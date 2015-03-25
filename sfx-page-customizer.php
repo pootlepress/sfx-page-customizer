@@ -461,6 +461,30 @@ final class SFX_Page_Customizer {
 				'type' => 'image',
 				'default' => '',
 			),
+			'background-repeat' => array(
+				'id' => 'background-repeat',
+				'section' => 'body',
+				'label' => 'Background Repeat',
+				'type' => 'radio',
+				'default' => 'repeat',
+				'options' => array('no-repeat' => 'No Repeat','repeat' => 'Tile','repeat-x' => 'Tile Horizontally','repeat-y' => 'Tile Vertically',)
+			),
+			'background-position' => array(
+				'id' => 'background-position',
+				'section' => 'body',
+				'label' => 'Background Position',
+				'type' => 'radio',
+				'default' => 'center',
+				'options' => array('left' => 'Left', 'center' => 'Center', 'right' => 'Right')
+			),
+			'background-attachment' => array(
+				'id' => 'background-attachment',
+				'section' => 'body',
+				'label' => 'Background Attachment',
+				'type' => 'radio',
+				'default' => 'scroll',
+				'options' => array('fixed' => 'Fixed','scroll' => 'Scroll')
+			),
 		  'background-color' => array(
 				'id' => 'background-color',
 				'section' => 'body',
@@ -570,6 +594,9 @@ final class SFX_Page_Customizer {
 		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
 		$headerTextColor = $this->get_value('header', 'header-text-color', null, $current_post);
 		$BgColor = $this->get_value('body', 'background-color', null, $current_post);
+		$BgOptions = ' '.$this->get_value('body', 'background-repeat', null, $current_post).' '
+		  . $this->get_value('body', 'background-attachment', null, $current_post).' '
+		  . $this->get_value('body', 'background-position', null, $current_post);
 		$BgImage = $this->get_value('body', 'background-image', null, $current_post);
 
 	
@@ -610,7 +637,7 @@ final class SFX_Page_Customizer {
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "#masthead { background: {$headerBgColor} !important; }"
-				. ".sub-menu , .site-header-cart .widget_shopping_cart { background-color: {$headerBgColor} !important; }\n";
+				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
 		}
 
 		if ($headerBgImage) {
@@ -627,10 +654,10 @@ final class SFX_Page_Customizer {
 		
 		if ($BgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
-			$css .= "body.sfx-page-customizer-active { background-color: {$BgColor} !important; }";
+			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
 		}
 		if ($BgImage) {
-			$css .= "body.sfx-page-customizer-active { background-image: url('$BgImage') !important; }\n";
+			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
 		}
 
 		wp_add_inline_style( 'sfxpc-styles', $css );
@@ -649,13 +676,17 @@ final class SFX_Page_Customizer {
 		$headerTextColor = $tax_data['header']['header-text-color'];
 		$headerLinkColor = $tax_data['header']['header-link-color'];
 		$BgImage = $tax_data['body']['background-image'];
+		$BgOptions = ' '.$this->get_value('body', 'background-repeat', null, $current_post).' '
+		  . $this->get_value('body', 'background-attachment', null, $current_post).' '
+		  . $this->get_value('body', 'background-position', null, $current_post);
+
 		$BgColor  = $tax_data['body']['background-color'];
 		
 		$css = '';
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "#masthead { background: {$headerBgColor} !important; }"
-				. ".sub-menu , .site-header-cart .widget_shopping_cart { background-color: {$headerBgColor} !important; }\n";
+				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
 		}
 
 		if ($headerBgImage) {
@@ -672,10 +703,10 @@ final class SFX_Page_Customizer {
 		
 		if ($BgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
-			$css .= "body.sfx-page-customizer-active { background-color: {$BgColor} !important; }";
+			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
 		}
 		if ($BgImage) {
-			$css .= "body.sfx-page-customizer-active { background-image: url('$BgImage') !important; }\n";
+			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
 		}
 		return $css;
 	}
@@ -792,7 +823,7 @@ final class SFX_Page_Customizer {
 
 				//Prefix to field
 				$html_prefix = ''
-				. '<tr class="form-field sfxpc-field">'
+				. '<tr class="form-field sfxpc-field ' . $args['id'] . '">'
 				. '<th scope="row"><label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label></th>'
 				. '<td>';
 
@@ -810,7 +841,7 @@ final class SFX_Page_Customizer {
 
 				//Prefix to field
 				$html_prefix = ''
-				. '<div class="form-field sfxpc-field">'
+				. '<div class="form-field sfxpc-field ' . $args['id'] . '">'
 				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
 
 				//Getting current value
@@ -824,7 +855,7 @@ final class SFX_Page_Customizer {
 			default:
 				//Prefix to field
 				$html_prefix = ''
-				. '<div class="field sfxpc-field">'
+				. '<div class="field sfxpc-field ' . $args['id'] . '">'
 				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>'
 				. '<div class="control">';
 
