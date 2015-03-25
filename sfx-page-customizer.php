@@ -564,9 +564,10 @@ final class SFX_Page_Customizer {
 		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
 		
 		//Check if it is a supported taxonomy term archive
-		if(is_tax($this->supported_taxonomies)){
+		if(is_tax($this->supported_taxonomies) || is_tag() || is_category()){
 			$css = $this->sfxpc_tax_styles();
 			wp_add_inline_style( 'sfxpc-styles', $css );
+			return;
 		}
 		
 		// check if this is single post or page or product or shop
@@ -676,9 +677,9 @@ final class SFX_Page_Customizer {
 		$headerTextColor = $tax_data['header']['header-text-color'];
 		$headerLinkColor = $tax_data['header']['header-link-color'];
 		$BgImage = $tax_data['body']['background-image'];
-		$BgOptions = ' '.$this->get_value('body', 'background-repeat', null, $current_post).' '
-		  . $this->get_value('body', 'background-attachment', null, $current_post).' '
-		  . $this->get_value('body', 'background-position', null, $current_post);
+		$BgOptions = ' '.$tax_data['body']['background-repeat'].' '
+		  . $tax_data['body']['background-attachment'].' '
+		  . $tax_data['body']['background-position'];
 
 		$BgColor  = $tax_data['body']['background-color'];
 		
@@ -828,7 +829,11 @@ final class SFX_Page_Customizer {
 				. '<td>';
 
 				//Getting current value
-				$current_val = $tax_data[$args['section']][$args['id']];
+				if($tax_data[$args['section']][$args['id']]){
+					$current_val = $tax_data[$args['section']][$args['id']];
+				}else{
+					$current_val = $args['default'];
+				}
 
 				//Suffix to field
 				$html_suffix = ''

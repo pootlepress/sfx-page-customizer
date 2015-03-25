@@ -11,7 +11,12 @@
 		if($bg_url.val() == ''){
 			$bg_options.hide(0);
 		}
-		
+
+		$bg_url.change(function(){
+			if($bg_url.val() == ''){
+				$bg_options.hide(0);
+			}else{$bg_options.show(0);}
+		})
 
         $('.sfxpc-field .color-picker-hex').wpColorPicker({
             //change: function() {
