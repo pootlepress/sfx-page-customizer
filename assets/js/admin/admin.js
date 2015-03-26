@@ -18,75 +18,45 @@
 			}else{$bg_options.show(0);}
 		})
 
-        $('.sfxpc-field .color-picker-hex').wpColorPicker({
-            //change: function() {
-            //    var $pickerHex =
-            //    control.setting.set( picker.val() );
-            //},
-            //clear: function() {
-            //    control.setting.set( '' );
-            //}
-        });
+        $('.sfxpc-field .color-picker-hex').wpColorPicker();
+		// Uploading Fields
+		var file_frame;
 
-        $('.sfxpc-field .upload-button').click(function () {
+		$('.sfxpc-field .upload-button').live('click', function( event ){
+			event.preventDefault();
 
-            var $textField = $(this).parent().find('input');
+			$textField = $(this).siblings('input');
 
-            window.sfxPCMetaBoxUploadField = $textField;
+			// If the media frame already exists, reopen it.
+			if ( file_frame ) {
+			  file_frame.open();
+			  return;
+			}
 
-            window.send_to_editor = function (html) {
+			// Create the media frame.
+			file_frame = wp.media.frames.file_frame = wp.media({
+			  title: $( this ).data( 'uploader_title' ),
+			  button: {
+				text: $( this ).data( 'uploader_button_text' ),
+			  },
+			  multiple: false  // Set to true to allow multiple files to be selected
+			});
 
-                if (typeof window.sfxPCMetaBoxUploadField != 'undefined' && window.sfxPCMetaBoxUploadField != null) {
+			// When an image is selected, run a callback.
+			file_frame.on( 'select', function() {
+			  // We set multiple to false so only get one image from the uploader
+			  attachment = file_frame.state().get('selection').first().toJSON();
 
-                    var itemurl = '';
-                    // itemurl = $(html).attr( 'href' ); // Use the URL to the main image.
+			  // Do something with attachment.id and/or attachment.url here
+			  $textField.val(attachment.url)
+			  $textField.change();
 
-                    if ( $(html).html(html).find( 'img').length > 0 ) {
+			});
 
-                        itemurl = $(html).html(html).find( 'img').attr( 'src' ); // Use the URL to the size selected.
+			// Finally, open the modal
+			file_frame.open();
+		});
 
-                    } else {
-
-                        // It's not an image. Get the URL to the file instead.
-
-                        var htmlBits = html.split( "'" ); // jQuery seems to strip out XHTML when assigning the string to an object. Use alternate method.
-
-                        itemurl = htmlBits[1]; // Use the URL to the file.
-
-                        var itemtitle = htmlBits[2];
-
-                        itemtitle = itemtitle.replace( '>', '' );
-                        itemtitle = itemtitle.replace( '</a>', '' );
-
-                    } // End IF Statement
-
-                    var image = /(^.*\.jpg|jpeg|png|gif|ico*)/gi;
-
-                    if (itemurl.match(image)) {
-
-                    } else {
-                    }
-
-                    //console.log(window.sfxPCMetaBoxUploadField);
-                    //console.log(itemurl);
-                    window.sfxPCMetaBoxUploadField.val(itemurl);
-					$bg_options.show(0);
-					
-                    //console.log(window.sfxPCMetaBoxUploadField.val());
-
-                    tb_remove();
-
-                } else {
-                    window.original_send_to_editor(html);
-                }
-
-                // Clear the formfield value so the other media library popups can work as they are meant to. - 2010-11-11.
-                window.sfxPCMetaBoxFormField = '';
-
-            };
-            tb_show('', 'media-upload.php?post_id=0&amp;title=Image&amp;type=image&amp;TB_iframe=true');
-            return false;
-        });
     });
 
 })(jQuery);
