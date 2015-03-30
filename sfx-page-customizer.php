@@ -152,6 +152,12 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 */
 	public $post_meta = array();
+	
+	/**
+	 * Controls not to show in taxonomies
+	 * @var array
+	 */
+	public $not_in_tax = array('page-post-title', 'hide-footer');
 
 	/**
 	 * Constructor function.
@@ -483,6 +489,14 @@ final class SFX_Page_Customizer {
 				'type' => 'color',
 				'default' => $background_color,
 			),
+			'hide-footer' => array(
+				'id' => 'hide-footer',
+				'section' => 'footer',
+				'label' => 'Hide footer',
+				'type' => 'checkbox',
+				'default' => '',
+			),
+
 		);
 	}
 	
@@ -554,6 +568,7 @@ final class SFX_Page_Customizer {
 	public function sfxpc_styles() {
 		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
 		
+		
 		//Check if it is a supported taxonomy term archive
 		if(is_tax($this->supported_taxonomies) || is_tag() || is_category()){
 			$css = $this->sfxpc_tax_styles();
@@ -590,6 +605,8 @@ final class SFX_Page_Customizer {
 		  . $this->get_value('body', 'background-attachment', null, $current_post).' '
 		  . $this->get_value('body', 'background-position', null, $current_post);
 		$BgImage = $this->get_value('body', 'background-image', null, $current_post);
+		$hide_footer = $this->get_value('footer', 'hide-footer', false, $current_post);
+		
 
 	
 		if ($pagePostTitleMeta == 'default') {
@@ -618,9 +635,7 @@ final class SFX_Page_Customizer {
 		elseif (in_array($post->post_type, $this->supported_post_types) && !$showPagePostTitle){
 			$css .= '.entry-title { display: none !important; }';
 		}
-
-		$css .= "";
-
+		
 		//Solving negative margin for product rating
 		if (in_array($post->post_type, array('product')) && !$showPagePostTitle){
 			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
@@ -650,6 +665,9 @@ final class SFX_Page_Customizer {
 		}
 		if ($BgImage) {
 			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
+		}
+		if($hide_footer){
+			$css .= "footer.site-footer { display:none !important; }\n";
 		}
 
 		wp_add_inline_style( 'sfxpc-styles', $css );
@@ -811,7 +829,7 @@ final class SFX_Page_Customizer {
 		
 		switch($output_format){
 			case 'termEdit':
-				if($args['id'] == 'page-post-title')return;
+				if(in_array($args['id'], $this->not_in_tax))return;
 
 				//Prefix to field
 				$html_prefix = ''
@@ -939,7 +957,7 @@ final class SFX_Page_Customizer {
 	 * @return  string       HTML markup for the field.
 	 */
 	protected function render_field_checkbox ( $key, $args, $current_val=null ) {
-		$html = '<input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="checkbox" value="true" ' . checked( $current_val, 'checked', false ) . ' />';
+		$html = '<input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="checkbox" value="true" ' . checked( $current_val, 'true', false ) . ' />';
 		return $html;
 	}
 
