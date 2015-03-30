@@ -327,15 +327,6 @@ final class SFX_Page_Customizer {
 	public function sfxpc_customize_register( $wp_customize ) {
 
 		/**
-	     * Add a new section
-	     */
-        $wp_customize->add_section( 'sfxpc_section' , array(
-		    'title'      	=> __( 'SFX Page Customizer', 'sfx-page-customizer' ),
-		    //'description' 	=> __( 'Add a description, if you want to!', 'sfx-page-customizer' ),
-		    'priority'   	=> 55,
-		) );
-
-		/**
 		 * Show Hide Page Post Title
 		 */
 		$wp_customize->add_setting('sfx-pc-show-page-post-title[checked]', array(
@@ -346,7 +337,7 @@ final class SFX_Page_Customizer {
 		$wp_customize->add_control(new WP_Customize_Control($wp_customize, 'sfx-pc-show-page-post-title', array(
 			'type' => 'checkbox',
 			'label' => 'Show page/post and product titles globally',
-			'section' => 'sfxpc_section',
+			'section' => 'storefront_layout',
 			'settings' => 'sfx-pc-show-page-post-title[checked]',
 			'default' => 1,
 			'priority' => 1,
