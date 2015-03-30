@@ -157,7 +157,7 @@ final class SFX_Page_Customizer {
 	 * Controls not to show in taxonomies
 	 * @var array
 	 */
-	public $not_in_tax = array('page-post-title', 'hide-footer');
+	public $not_in_tax = array('page-post-title', 'hide-footer', 'hide-primary-menu', 'hide-secondary-menu');
 
 	/**
 	 * Constructor function.
@@ -423,6 +423,21 @@ final class SFX_Page_Customizer {
 				'default' => 'default',
 				'options' => array('default' => 'Global default', 'show' => 'Show', 'hide' => 'Hide')
 			),
+			'hide-primary-menu' => array(
+				'id' => 'hide-primary-menu',
+				'section' => 'header',
+				'label' => 'Hide primary menu',
+				'type' => 'checkbox',
+				'default' => '',
+			),
+			'hide-secondary-menu' => array(
+				'id' => 'hide-secondary-menu',
+				'section' => 'header',
+				'label' => 'Hide secondary menu',
+				'type' => 'checkbox',
+				'default' => '',
+			),
+
 			'header-background-image' => array(
 				'id' => 'header-background-image',
 				'section' => 'header',
@@ -595,6 +610,9 @@ final class SFX_Page_Customizer {
 		}else{
 			$current_post = false;
 		}
+		
+		$hidePrimaryNav = $this->get_value('header', 'hide-primary-menu', null, $current_post);
+		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
 		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
 		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
 		$headerBgImage = $this->get_value('header', 'header-background-image', null, $current_post);
@@ -641,24 +659,26 @@ final class SFX_Page_Customizer {
 			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
 		}
 		
+		if($hidePrimaryNav){
+			$css .= ".secondary-navigation { display:none !important; }\n";
+		}
+		if($hideSecondaryNav){
+			$css .= ".main-navigation { display:none !important; }\n";
+		}
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "#masthead { background: {$headerBgColor} !important; }"
 				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
 		}
-
 		if ($headerBgImage) {
 			$css .= "#masthead { background-image: url('$headerBgImage') !important; }\n";
 		}
-
 		if($headerLinkColor){
 			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
 		}
-
 		if($headerTextColor){
 			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
 		}
-		
 		if ($BgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
