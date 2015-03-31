@@ -575,7 +575,7 @@ final class SFX_Page_Customizer {
 		$showPagePostTitle = null;
 
 		//Meta values for the page
-		if(is_shop()){
+		if(function_exists('is_shop')  && is_shop()){
 			$current_post = get_option( 'woocommerce_shop_page_id' );
 		}elseif(is_home()){
 			$current_post = get_option( 'page_for_posts' );
@@ -601,7 +601,7 @@ final class SFX_Page_Customizer {
 		$hide_footer = $this->get_value('footer', 'hide-footer', false, $current_post);
 
 		//Hiding the title for Shop Page, Post, Products and Page
-		if(is_shop() && $hideTitle){
+		if(function_exists('is_shop')  && is_shop() && $hideTitle){
 			$css .= '.page-title { display: none !important; }';
 		}elseif(is_home() && $hideTitle){
 			$css .= '.blog-header { display: none !important; }';
