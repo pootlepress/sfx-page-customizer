@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: Storefront Extension - Page Customizer
+ * Plugin Name: Storefront Page Customizer
  * Plugin URI: http://woothemes.com/products/sfx-page-customizer/
  * Description:	Adds options for individual pages, posts and products underneath the WordPress editor. Change background image and color, header background image and color, hide titles, menus, breadcrumbs, layouts and footer.
  * Version: 1.0.0
@@ -256,9 +256,11 @@ final class SFX_Page_Customizer {
 		$this->_log_version_number();
 
 		$notices 		= get_option( 'sfxpc_activation_notice', array() );
-		$notices[]		= sprintf( __( 
-		  'Thanks for installing Page Customizer extension for Storefront. You now have new options for individual pages, posts and products. You can find these options underneath the WordPress editor when you edit pages, posts and products.', 
-		  'sfx-page-customizer' ) );
+		$notices[]		= '<p>' 
+		  . sprintf( __( 
+			'Thanks for installing Page Customizer extension for Storefront. You now have new options for individual pages, posts and products. You can find these options underneath the WordPress editor when you edit pages, posts and products.', 
+			'sfx-page-customizer' ) ) 
+		  . '</p>';
 
 		update_option( 'sfxpc_activation_notice', $notices );
 	}
