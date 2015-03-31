@@ -428,12 +428,20 @@ final class SFX_Page_Customizer {
 				'default' => $background_color,
 			),
 		  //Header Options
+			'hide-header' => array(
+				'id' => 'hide-header',
+				'section' => 'header',
+				'label' => 'Hide header',
+				'type' => 'checkbox',
+				'default' => '',
+			),
 			'header-background-image' => array(
 				'id' => 'header-background-image',
 				'section' => 'header',
 				'label' => 'Header background image',
 				'type' => 'image',
 				'default' => '',
+			    'description' => 'Recommended header size is 1950 × 250 pixels.',
 			),
 			'header-background-color' => array(
 				'id' => 'header-background-color',
@@ -489,7 +497,7 @@ final class SFX_Page_Customizer {
 			'page-post-title' => array(
 				'id' => 'page-post-title',
 				'section' => 'header',
-				'label' => 'Hide title',
+				'label' => 'Hide page title',
 				'type' => 'checkbox',
 				'default' => '',
 			),
@@ -613,6 +621,7 @@ final class SFX_Page_Customizer {
 		}
 		
 		$layout = $this->get_value('general', 'layout', 'right', $current_post);
+		$hideHeader = $this->get_value('header', 'hide-header', false, $current_post);
 		$hidePrimaryNav = $this->get_value('header', 'hide-primary-menu', null, $current_post);
 		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
 		$hideHeaderCart = $this->get_value('header', 'hide-shop-cart', null, $current_post);
@@ -630,16 +639,15 @@ final class SFX_Page_Customizer {
 		$bodyLinkColor = $this->get_value('body', 'body-link-color', null, $current_post);
 		$bodyTextColor = $this->get_value('body', 'body-text-color', null, $current_post);
 		$bodyHeadColor = $this->get_value('body', 'body-head-color', null, $current_post);
-		$hide_footer = $this->get_value('footer', 'hide-footer', false, $current_post);
+		$hideFooter = $this->get_value('footer', 'hide-footer', false, $current_post);
 
 		//Hiding the title for Shop Page, Post, Products and Page
 		if($is_shop && $hideTitle){
 			$css .= '.page-title { display: none !important; }';
 		}elseif(is_home() && $hideTitle){
 			$css .= '.blog-header { display: none !important; }';
-		}
-		elseif (in_array($post->post_type, $this->supported_post_types) && $hideTitle){
-			$css .= '.entry-title { display: none !important; }';
+		}elseif (in_array($post->post_type, $this->supported_post_types) && $hideTitle){
+			$css .= '.entry-header { display: none !important; }';
 		}
 
 		//Solving negative margin for product rating
@@ -651,6 +659,9 @@ final class SFX_Page_Customizer {
 		remove_filter( 'body_class', 'storefront_layout_class' );
 		$this->body_classes[] = $layout . '-sidebar';
 		
+		if($hideHeader){
+			$css .= "#masthead { display:none !important; }\n";
+		}
 		if($hidePrimaryNav){
 			$css .= ".main-navigation { display:none !important; }\n";
 		}
@@ -693,7 +704,7 @@ final class SFX_Page_Customizer {
 		if ($BgImage) {
 			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
 		}
-		if($hide_footer){
+		if($hideFooter){
 			$css .= "footer.site-footer { display:none !important; }\n";
 		}
 
