@@ -255,14 +255,10 @@ final class SFX_Page_Customizer {
 	public function install() {
 		$this->_log_version_number();
 
-		// get theme customizer url
-		$url = admin_url() . 'customize.php?';
-		$url .= 'url=' . urlencode( site_url() . '?storefront-customizer=true' ) ;
-		$url .= '&return=' . urlencode( admin_url() . 'plugins.php' );
-		$url .= '&storefront-customizer=true';
-
 		$notices 		= get_option( 'sfxpc_activation_notice', array() );
-		$notices[]		= sprintf( __( '%sThanks for installing the SFX Page Customizer extension. To get started, visit the %sCustomizer%s.%s %sOpen the Customizer%s', 'sfx-page-customizer' ), '<p>', '<a href="' . esc_url( $url ) . '">', '</a>', '</p>', '<p><a href="' . esc_url( $url ) . '" class="button button-primary">', '</a></p>' );
+		$notices[]		= sprintf( __( 
+		  'Thanks for installing Page Customizer extension for Storefront. You now have new options for individual pages, posts and products. You can find these options underneath the WordPress editor when you edit pages, posts and products.', 
+		  'sfx-page-customizer' ) );
 
 		update_option( 'sfxpc_activation_notice', $notices );
 	}
@@ -491,10 +487,9 @@ final class SFX_Page_Customizer {
 			'page-post-title' => array(
 				'id' => 'page-post-title',
 				'section' => 'header',
-				'label' => 'Show/Hide title',
-				'type' => 'select',
-				'default' => 'default',
-				'options' => array('default' => 'Global default', 'show' => 'Show', 'hide' => 'Hide')
+				'label' => 'Hide title',
+				'type' => 'checkbox',
+				'default' => '',
 			),
 		  //Layout
 			'layout' => array(
@@ -591,7 +586,7 @@ final class SFX_Page_Customizer {
 		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
 		$hideHeaderCart = $this->get_value('header', 'hide-shop-cart', null, $current_post);
 		$hideBreadcrumbs = $this->get_value('header', 'hide-breadcrumbs', null, $current_post);
-		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
+		$hideTitle = $this->get_value('header', 'page-post-title', '', $current_post);
 		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
 		$headerBgImage = $this->get_value('header', 'header-background-image', null, $current_post);
 		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
@@ -602,41 +597,22 @@ final class SFX_Page_Customizer {
 		  . $this->get_value('body', 'background-position', null, $current_post);
 		$BgImage = $this->get_value('body', 'background-image', null, $current_post);
 		$hide_footer = $this->get_value('footer', 'hide-footer', false, $current_post);
-		
 
-	
-		if ($pagePostTitleMeta == 'default') {
-			$arr = get_option('sfx-pc-show-page-post-title', array('checked' => true));
-			if (is_array($arr) && isset($arr['checked'])) {
-				$showPagePostTitleGlobally = $arr['checked'] == true;
-			} else {
-				$showPagePostTitleGlobally = false;
-			}
-
-			$showPagePostTitle = $showPagePostTitleGlobally;
-		} else {
-			if ($pagePostTitleMeta == 'show') {
-				$showPagePostTitle = true;
-			} else {
-				$showPagePostTitle = false;
-			}
-		}
-		
 		//Hiding the title for Shop Page, Post, Products and Page
-		if(is_shop() && !$showPagePostTitle){
+		if(is_shop() && $hideTitle){
 			$css .= '.page-title { display: none !important; }';
-		}elseif(is_home() && !$showPagePostTitle){
+		}elseif(is_home() && $hideTitle){
 			$css .= '.blog-header { display: none !important; }';
 		}
-		elseif (in_array($post->post_type, $this->supported_post_types) && !$showPagePostTitle){
+		elseif (in_array($post->post_type, $this->supported_post_types) && $hideTitle){
 			$css .= '.entry-title { display: none !important; }';
 		}
-		
+
 		//Solving negative margin for product rating
-		if (in_array($post->post_type, array('product')) && !$showPagePostTitle){
+		if (in_array($post->post_type, array('product')) && $hideTitle){
 			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
 		}
-		
+
 		//Layout
 		remove_filter( 'body_class', 'storefront_layout_class' );
 		$this->body_classes[] = $layout . '-sidebar';
