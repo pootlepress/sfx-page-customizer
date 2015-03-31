@@ -303,12 +303,6 @@ final class SFX_Page_Customizer {
 			add_action( 'customize_preview_init', array( $this, 'sfxpc_customize_preview_js' ) );
 			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
 			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
-			foreach ($this->supported_taxonomies as $tax){
-				//add_action( "{$tax}_add_form_fields", array( $this, 'tax_custom_fields'));
-				add_action( "{$tax}_edit_form_fields", array( $this, 'tax_custom_fields' ) );
-				//add_action( 'create_terms', array( $this, 'save_term_fields' ) );
-				add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
-			}
 			// Hide the 'More' section in the customizer
 			add_filter( 'storefront_customizer_more', '__return_false' );
 		}
@@ -337,9 +331,7 @@ final class SFX_Page_Customizer {
 	 * Customizer Controls and settings
 	 * @param WP_Customize_Manager $wp_customize Theme Customizer object.
 	 */
-	public function sfxpc_customize_register( $wp_customize ) {
-
-	}
+	public function sfxpc_customize_register( $wp_customize ) {/*Placeholder for future*/}
 
 	public function register_meta_box() {
 		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'custom_fields'), 'post');
@@ -366,14 +358,6 @@ final class SFX_Page_Customizer {
 				$new_val = $sfxPCValues[$meta['section']][$meta['id']];
 				update_post_meta($postID, $meta_id, $new_val);
 			}
-		}
-	}
-
-	public function save_term_fields($ID) {
-		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
-			$setting_name = $this->token.'-cat'.$ID;
-			$sfxPCValues = $_REQUEST[$this->token];
-			update_option($setting_name, $sfxPCValues);
 		}
 	}
 
@@ -542,27 +526,6 @@ final class SFX_Page_Customizer {
 			$this->render_field($field);
 		}
 	}
-	
-	public function tax_custom_fields($term) {
-		global $pagenow;
-		$id = $term;
-		$tax_sfxpc_data = null;
-		
-		if(isset($_REQUEST['action'])){
-			$output_format = 'termEdit';
-			$setting_name = $this->token. '-cat' . $term->term_id;
-			$tax_sfxpc_data = get_option($setting_name);
-
-		}else{
-			$output_format = 'termAdd';
-		}
-		
-		$fields = $this->post_meta;
-
-		foreach ($fields as $key => $field) {
-			$this->render_field($field, $output_format, $tax_sfxpc_data);
-		}
-	}
 
 	/**
 	 * Gets value of post meta
@@ -726,53 +689,6 @@ final class SFX_Page_Customizer {
 		wp_add_inline_style( 'sfxpc-styles', $css );
 	}
 
-	public function sfxpc_tax_styles(){
-		$term = get_queried_object();
-		$setting_name = $this->token. '-cat' . $term->term_id;
-		$tax_data = get_option($setting_name);
-		
-		if(!$tax_data)return;
-		
-		// $pagePostTitleMeta= $tax_data['header']['color'];
-		$headerBgColor = $tax_data['header']['header-background-color'];
-		$headerBgImage = $tax_data['header']['header-background-image'];
-		$headerTextColor = $tax_data['header']['header-text-color'];
-		$headerLinkColor = $tax_data['header']['header-link-color'];
-		$BgImage = $tax_data['body']['background-image'];
-		$BgOptions = ' '.$tax_data['body']['background-repeat'].' '
-		  . $tax_data['body']['background-attachment'].' '
-		  . $tax_data['body']['background-position'];
-
-		$BgColor  = $tax_data['body']['background-color'];
-		
-		$css = '';
-		if ($headerBgColor) {
-			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
-			$css .= "#masthead { background: {$headerBgColor} !important; }"
-				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
-		}
-
-		if ($headerBgImage) {
-			$css .= "#masthead { background-image: url('$headerBgImage') !important; }\n";
-		}
-
-		if($headerLinkColor){
-			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
-		}
-
-		if($headerTextColor){
-			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
-		}
-		
-		if ($BgColor) {
-			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
-			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
-		}
-		if ($BgImage) {
-			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
-		}
-		return $css;
-	}
 	/**
 	 * Print custom js
 	 * @since   1.0.0
