@@ -566,14 +566,6 @@ final class SFX_Page_Customizer {
 	public function sfxpc_styles() {
 		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
 		
-		
-		//Check if it is a supported taxonomy term archive
-		if(is_tax($this->supported_taxonomies) || is_tag() || is_category()){
-			$css = $this->sfxpc_tax_styles();
-			wp_add_inline_style( 'sfxpc-styles', $css );
-			return;
-		}
-		
 		// check if this is single post or page or product or shop
 		if(!is_singular($this->supported_post_types) && !is_shop() && !is_home()) {
 			return;
