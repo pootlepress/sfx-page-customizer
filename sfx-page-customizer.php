@@ -399,7 +399,7 @@ final class SFX_Page_Customizer {
 			'background-repeat' => array(
 				'id' => 'background-repeat',
 				'section' => 'body',
-				'label' => 'Background Repeat',
+				'label' => 'Background repeat',
 				'type' => 'radio',
 				'default' => 'repeat',
 				'options' => array('no-repeat' => 'No Repeat','repeat' => 'Tile','repeat-x' => 'Tile Horizontally','repeat-y' => 'Tile Vertically',)
@@ -407,7 +407,7 @@ final class SFX_Page_Customizer {
 			'background-position' => array(
 				'id' => 'background-position',
 				'section' => 'body',
-				'label' => 'Background Position',
+				'label' => 'Background position',
 				'type' => 'radio',
 				'default' => 'center',
 				'options' => array('left' => 'Left', 'center' => 'Center', 'right' => 'Right')
@@ -415,7 +415,7 @@ final class SFX_Page_Customizer {
 			'background-attachment' => array(
 				'id' => 'background-attachment',
 				'section' => 'body',
-				'label' => 'Background Attachment',
+				'label' => 'Background attachment',
 				'type' => 'radio',
 				'default' => 'scroll',
 				'options' => array('fixed' => 'Fixed','scroll' => 'Scroll')
@@ -467,7 +467,7 @@ final class SFX_Page_Customizer {
 			'hide-shop-cart' => array(
 				'id' => 'hide-shop-cart',
 				'section' => 'header',
-				'label' => 'Hide Shopping Cart in Header',
+				'label' => 'Hide shopping cart in header',
 				'type' => 'checkbox',
 				'default' => '',
 			),
@@ -504,7 +504,7 @@ final class SFX_Page_Customizer {
 			'body-link-color' => array(
 				'id' => 'body-link-color',
 				'section' => 'body',
-				'label' => 'Link / accent color',
+				'label' => 'Typography - link / accent color',
 				'type' => 'color',
 				'default' => '',
 			),
