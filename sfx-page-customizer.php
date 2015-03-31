@@ -163,7 +163,7 @@ final class SFX_Page_Customizer {
 	 * Array of classes to be put in body
 	 * @var array 
 	 */
-	public $body_classes = [];
+	public $body_classes = array();
 
 
 	/**
