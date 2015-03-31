@@ -493,6 +493,27 @@ final class SFX_Page_Customizer {
 				'type' => 'checkbox',
 				'default' => '',
 			),
+			'body-link-color' => array(
+				'id' => 'body-link-color',
+				'section' => 'body',
+				'label' => 'Link / accent color',
+				'type' => 'color',
+				'default' => '',
+			),
+			'body-text-color' => array(
+				'id' => 'body-text-color',
+				'section' => 'body',
+				'label' => 'Text color',
+				'type' => 'color',
+				'default' => '',
+			),
+			'body-head-color' => array(
+				'id' => 'body-head-color',
+				'section' => 'body',
+				'label' => 'Heading color',
+				'type' => 'color',
+				'default' => '',
+			),
 		  //Layout
 			'layout' => array(
 				'id' => 'layout',
@@ -606,6 +627,9 @@ final class SFX_Page_Customizer {
 		  . $this->get_value('body', 'background-attachment', null, $current_post).' '
 		  . $this->get_value('body', 'background-position', null, $current_post);
 		$BgImage = $this->get_value('body', 'background-image', null, $current_post);
+		$bodyLinkColor = $this->get_value('body', 'body-link-color', null, $current_post);
+		$bodyTextColor = $this->get_value('body', 'body-text-color', null, $current_post);
+		$bodyHeadColor = $this->get_value('body', 'body-head-color', null, $current_post);
 		$hide_footer = $this->get_value('footer', 'hide-footer', false, $current_post);
 
 		//Hiding the title for Shop Page, Post, Products and Page
@@ -656,6 +680,15 @@ final class SFX_Page_Customizer {
 		if ($BgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
+		}
+		if($bodyLinkColor){
+			$css .= "a { color: $bodyLinkColor !important; }";
+		}
+		if($bodyTextColor){
+			$css .= "body, .secondary-navigation a, .widget-area .widget a, .onsale, #comments .comment-list .reply a { color: $bodyTextColor !important; }";
+		}
+		if($bodyHeadColor){
+			$css .= "h1, h2, h3, h4, h5, h6 { color: $bodyHeadColor !important; }";
 		}
 		if ($BgImage) {
 			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
