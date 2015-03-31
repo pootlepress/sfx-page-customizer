@@ -563,8 +563,16 @@ final class SFX_Page_Customizer {
 	public function sfxpc_styles() {
 		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
 		
+		$is_shop=false;
+		if(function_exists('is_shop')){
+			if(is_shop()){
+				$is_shop = true;
+			}
+		}
+		
+		
 		// check if this is single post or page or product or shop
-		if(!is_singular($this->supported_post_types) && !is_shop() && !is_home()) {
+		if(!is_singular($this->supported_post_types) && !$is_shop && !is_home()) {
 			return;
 		}
 
@@ -575,7 +583,7 @@ final class SFX_Page_Customizer {
 		$showPagePostTitle = null;
 
 		//Meta values for the page
-		if(function_exists('is_shop')  && is_shop()){
+		if($is_shop){
 			$current_post = get_option( 'woocommerce_shop_page_id' );
 		}elseif(is_home()){
 			$current_post = get_option( 'page_for_posts' );
@@ -601,7 +609,7 @@ final class SFX_Page_Customizer {
 		$hide_footer = $this->get_value('footer', 'hide-footer', false, $current_post);
 
 		//Hiding the title for Shop Page, Post, Products and Page
-		if(function_exists('is_shop')  && is_shop() && $hideTitle){
+		if($is_shop && $hideTitle){
 			$css .= '.page-title { display: none !important; }';
 		}elseif(is_home() && $hideTitle){
 			$css .= '.blog-header { display: none !important; }';
