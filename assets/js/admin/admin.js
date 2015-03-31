@@ -18,10 +18,11 @@
 			}else{$bg_options.show(0);}
 		})
 
-        $('.sfxpc-field .color-picker-hex').wpColorPicker();
-		// Uploading Fields
+        //wpColorPicker
+		$('.sfxpc-field .color-picker-hex').wpColorPicker();
+		
+		// Uploading Fields aka media selection
 		var file_frame;
-
 		$('.sfxpc-field .upload-button').live('click', function( event ){
 			event.preventDefault();
 
@@ -57,6 +58,19 @@
 			file_frame.open();
 		});
 
+		// Layout graphical radio buttons
+		//Hiding the radio buttons
+		$('.sfxpc-field.layout input').css('display', 'none')
+		//Highlighting the selected image
+		$('.sfxpc-field.layout input:checked').siblings('img').css({border: '2px solid #999'});
+		//Function for selecting radio on clicking on image
+		$('.sfxpc-field.layout img').on('click', function(){
+			$t = $(this);
+			$('.sfxpc-field.layout img').css({border: '2px solid #ccc'});
+			$t.css({border: '2px solid #999'});
+			$t.siblings('input').attr('checked', 'checked').change();
+		});
+		
     });
 
 })(jQuery);

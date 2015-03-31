@@ -160,6 +160,13 @@ final class SFX_Page_Customizer {
 	public $not_in_tax = array('page-post-title', 'hide-footer', 'hide-primary-menu', 'hide-secondary-menu');
 
 	/**
+	 * Array of classes to be put in body
+	 * @var array 
+	 */
+	public $body_classes = [];
+
+
+	/**
 	 * Constructor function.
 	 * @access  public
 	 * @since   1.0.0
@@ -415,57 +422,7 @@ final class SFX_Page_Customizer {
 		$background_color = '';
 
 		$this->post_meta = array(
-			'page-post-title' => array(
-				'id' => 'page-post-title',
-				'section' => 'header',
-				'label' => 'Show/Hide title',
-				'type' => 'select',
-				'default' => 'default',
-				'options' => array('default' => 'Global default', 'show' => 'Show', 'hide' => 'Hide')
-			),
-			'hide-primary-menu' => array(
-				'id' => 'hide-primary-menu',
-				'section' => 'header',
-				'label' => 'Hide primary menu',
-				'type' => 'checkbox',
-				'default' => '',
-			),
-			'hide-secondary-menu' => array(
-				'id' => 'hide-secondary-menu',
-				'section' => 'header',
-				'label' => 'Hide secondary menu',
-				'type' => 'checkbox',
-				'default' => '',
-			),
-
-			'header-background-image' => array(
-				'id' => 'header-background-image',
-				'section' => 'header',
-				'label' => 'Header background image',
-				'type' => 'image',
-				'default' => '',
-			),
-		  'header-background-color' => array(
-				'id' => 'header-background-color',
-				'section' => 'header',
-				'label' => 'Header background color',
-				'type' => 'color',
-				'default' => $header_background_color,
-			),
-			'header-text-color' => array(
-				'id' => 'header-text-color',
-				'section' => 'header',
-				'label' => 'Header text color',
-				'type' => 'color',
-				'default' => $header_text_color,
-			),
-			'header-link-color' => array(
-				'id' => 'header-link-color',
-				'section' => 'header',
-				'label' => 'Header link color',
-				'type' => 'color',
-				'default' => $header_link_color,
-			),
+		  //Body Controls
 			'background-image' => array(
 				'id' => 'background-image',
 				'section' => 'body',
@@ -504,6 +461,85 @@ final class SFX_Page_Customizer {
 				'type' => 'color',
 				'default' => $background_color,
 			),
+		  //Header Options
+			'header-background-image' => array(
+				'id' => 'header-background-image',
+				'section' => 'header',
+				'label' => 'Header background image',
+				'type' => 'image',
+				'default' => '',
+			),
+			'header-background-color' => array(
+				'id' => 'header-background-color',
+				'section' => 'header',
+				'label' => 'Header background color',
+				'type' => 'color',
+				'default' => $header_background_color,
+			),
+			'header-text-color' => array(
+				'id' => 'header-text-color',
+				'section' => 'header',
+				'label' => 'Header text color',
+				'type' => 'color',
+				'default' => $header_text_color,
+			),
+			'header-link-color' => array(
+				'id' => 'header-link-color',
+				'section' => 'header',
+				'label' => 'Header link color',
+				'type' => 'color',
+				'default' => $header_link_color,
+			),
+			'hide-shop-cart' => array(
+				'id' => 'hide-shop-cart',
+				'section' => 'header',
+				'label' => 'Hide Shopping Cart in Header',
+				'type' => 'checkbox',
+				'default' => '',
+			),
+		  //Menu Options
+			'hide-primary-menu' => array(
+				'id' => 'hide-primary-menu',
+				'section' => 'header',
+				'label' => 'Hide primary menu',
+				'type' => 'checkbox',
+				'default' => '',
+			),
+			'hide-secondary-menu' => array(
+				'id' => 'hide-secondary-menu',
+				'section' => 'header',
+				'label' => 'Hide secondary menu',
+				'type' => 'checkbox',
+				'default' => '',
+			),
+		  //Main Section
+			'hide-breadcrumbs' => array(
+				'id' => 'hide-breadcrumbs',
+				'section' => 'header',
+				'label' => 'Hide breadcrumbs',
+				'type' => 'checkbox',
+				'default' => '',
+			),
+			'page-post-title' => array(
+				'id' => 'page-post-title',
+				'section' => 'header',
+				'label' => 'Show/Hide title',
+				'type' => 'select',
+				'default' => 'default',
+				'options' => array('default' => 'Global default', 'show' => 'Show', 'hide' => 'Hide')
+			),
+		  //Layout
+			'layout' => array(
+				'id' => 'layout',
+				'section' => 'general',
+				'label' => 'Layout',
+				'type' => 'radio',
+				'default' => 'right',
+				'options' => array(
+				  'left' => '<img src="' . get_template_directory_uri() . '/inc/customizer/controls/img/2cl.png">',
+				  'right' => '<img src="' . get_template_directory_uri() . '/inc/customizer/controls/img/2cr.png">')
+			),
+		  //Footer
 			'hide-footer' => array(
 				'id' => 'hide-footer',
 				'section' => 'footer',
@@ -611,8 +647,11 @@ final class SFX_Page_Customizer {
 			$current_post = false;
 		}
 		
+		$layout = $this->get_value('general', 'layout', 'right', $current_post);
 		$hidePrimaryNav = $this->get_value('header', 'hide-primary-menu', null, $current_post);
 		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
+		$hideHeaderCart = $this->get_value('header', 'hide-shop-cart', null, $current_post);
+		$hideBreadcrumbs = $this->get_value('header', 'hide-breadcrumbs', null, $current_post);
 		$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post);
 		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
 		$headerBgImage = $this->get_value('header', 'header-background-image', null, $current_post);
@@ -659,11 +698,21 @@ final class SFX_Page_Customizer {
 			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
 		}
 		
+		//Layout
+		remove_filter( 'body_class', 'storefront_layout_class' );
+		$this->body_classes[] = $layout . '-sidebar';
+		
 		if($hidePrimaryNav){
-			$css .= ".secondary-navigation { display:none !important; }\n";
+			$css .= ".main-navigation { display:none !important; }\n";
 		}
 		if($hideSecondaryNav){
-			$css .= ".main-navigation { display:none !important; }\n";
+			$css .= ".secondary-navigation { display:none !important; }\n";
+		}
+		if($hideHeaderCart){
+			$css .= ".site-header-cart.menu { display:none !important; }\n";
+		}
+		if($hideBreadcrumbs){
+			$css .= ".woocommerce-breadcrumb { display:none !important; }\n";
 		}
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
@@ -814,9 +863,8 @@ final class SFX_Page_Customizer {
 	 * Adds a class based on the extension name and any relevant settings.
 	 */
 	public function sfxpc_body_class( $classes ) {
-		$classes[] = 'sfx-page-customizer-active';
-
-		return $classes;
+		$this->body_classes[] = 'sfx-page-customizer-active';
+		return array_merge($classes, $this->body_classes);
 	}
 
 	/**
@@ -949,7 +997,7 @@ final class SFX_Page_Customizer {
 		$html = '';
 		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
 			foreach ( $args['options'] as $k => $v ) {
-				$html .= '<input type="radio" name="' . esc_attr( $key ) . '" value="' . esc_attr( $k ) . '"' . checked( esc_attr( $current_val ), $k, false ) . ' /> ' . esc_html( $v ) . '<br />' . "\n";
+				$html .= '<label for="' . esc_attr( $key ) . '"><input type="radio" name="' . esc_attr( $key ) . '" value="' . esc_attr( $k ) . '"' . checked( esc_attr( $current_val ), $k, false ) . ' /> ' . $v . '</label><br>' . "\n";
 			}
 		}
 		return $html;
