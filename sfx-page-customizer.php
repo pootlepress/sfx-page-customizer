@@ -511,14 +511,14 @@ final class SFX_Page_Customizer {
 			'body-text-color' => array(
 				'id' => 'body-text-color',
 				'section' => 'body',
-				'label' => 'Text color',
+				'label' => 'Typography - text color',
 				'type' => 'color',
 				'default' => '',
 			),
 			'body-head-color' => array(
 				'id' => 'body-head-color',
 				'section' => 'body',
-				'label' => 'Heading color',
+				'label' => 'Typography - heading color',
 				'type' => 'color',
 				'default' => '',
 			),
@@ -577,7 +577,7 @@ final class SFX_Page_Customizer {
 	}
 
 	private function get_meta_key($section, $id) {
-		return $this->token . '-' . $section . '-' . $id;
+		return '_'.$this->token . '-' . $section . '-' . $id;
 	}
 
 	private function get_field_key($section, $id) {
