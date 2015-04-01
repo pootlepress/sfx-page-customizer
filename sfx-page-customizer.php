@@ -673,6 +673,7 @@ final class SFX_Page_Customizer {
 		}
 		if($hideBreadcrumbs){
 			$css .= ".woocommerce-breadcrumb { display:none !important; }\n";
+			$this->body_classes[] = 'no-wc-breadcrumb';
 		}
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
