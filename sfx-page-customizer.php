@@ -305,6 +305,12 @@ final class SFX_Page_Customizer {
 			add_action( 'wp_head', array( $this, 'remove_hidden_stuff' ) );
 			// Hide the 'More' section in the customizer
 			add_filter( 'storefront_customizer_more', '__return_false' );
+			foreach ($this->supported_taxonomies as $tax){
+				//add_action( "{$tax}_add_form_fields", array( $this, 'tax_custom_fields'));
+				add_action( "{$tax}_edit_form_fields", array( $this, 'tax_custom_fields' ) );
+				//add_action( 'create_terms', array( $this, 'save_term_fields' ) );
+				add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
+			}
 		}
 	}
 
@@ -363,6 +369,14 @@ final class SFX_Page_Customizer {
 				}
 				update_post_meta($postID, $meta_id, $new_val);
 			}
+		}
+	}
+
+	public function save_term_fields($ID) {
+		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
+			$setting_name = $this->token.'-cat'.$ID;
+			$sfxPCValues = $_REQUEST[$this->token];
+			update_option($setting_name, $sfxPCValues);
 		}
 	}
 
@@ -587,7 +601,28 @@ final class SFX_Page_Customizer {
 		
 		echo "</div>";
 	}
+	
+	public function tax_custom_fields($term) {
+		global $pagenow;
+		$id = $term;
+		$tax_sfxpc_data = null;
+		
+		if(isset($_REQUEST['action'])){
+			$output_format = 'termEdit';
+			$setting_name = $this->token. '-cat' . $term->term_id;
+			$tax_sfxpc_data = get_option($setting_name);
 
+		}else{
+			$output_format = 'termAdd';
+		}
+		
+		$fields = $this->post_meta;
+
+		foreach ($fields as $key => $field) {
+			$this->render_field($field, $output_format, $tax_sfxpc_data);
+		}
+	}
+ 
 	/**
 	 * Gets value of post meta
 	 * @global type $post
@@ -694,6 +729,13 @@ final class SFX_Page_Customizer {
 	 */
 	public function sfxpc_styles() {
 		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
+
+		//Check if it is a supported taxonomy term archive
+		if(is_tax($this->supported_taxonomies) || is_tag() || is_category()){
+			$css = $this->sfxpc_tax_styles();
+			wp_add_inline_style( 'sfxpc-styles', $css );
+			return;
+		}
 		
 		$is_shop=false;
 		if(function_exists('is_shop')){
@@ -801,6 +843,54 @@ final class SFX_Page_Customizer {
 		}
 
 		wp_add_inline_style( 'sfxpc-styles', $css );
+	}
+
+	public function sfxpc_tax_styles(){
+		$term = get_queried_object();
+		$setting_name = $this->token. '-cat' . $term->term_id;
+		$tax_data = get_option($setting_name);
+		
+		if(!$tax_data)return;
+		
+		// $pagePostTitleMeta= $tax_data['header']['color'];
+		$headerBgColor = $tax_data['header']['header-background-color'];
+		$headerBgImage = $tax_data['header']['header-background-image'];
+		$headerTextColor = $tax_data['header']['header-text-color'];
+		$headerLinkColor = $tax_data['header']['header-link-color'];
+		$BgImage = $tax_data['body']['background-image'];
+		$BgOptions = ' '.$tax_data['body']['background-repeat'].' '
+		  . $tax_data['body']['background-attachment'].' '
+		  . $tax_data['body']['background-position'];
+
+		$BgColor  = $tax_data['body']['background-color'];
+		
+		$css = '';
+		if ($headerBgColor) {
+			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
+			$css .= "#masthead { background: {$headerBgColor} !important; }"
+				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
+		}
+
+		if ($headerBgImage) {
+			$css .= "#masthead { background-image: url('$headerBgImage') !important; }\n";
+		}
+
+		if($headerLinkColor){
+			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
+		}
+
+		if($headerTextColor){
+			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
+		}
+		
+		if ($BgColor) {
+			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
+			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
+		}
+		if ($BgImage) {
+			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
+		}
+		return $css;
 	}
 
 	/**
