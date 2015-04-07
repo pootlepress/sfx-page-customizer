@@ -290,7 +290,7 @@ final class SFX_Page_Customizer {
 			$this->get_supported_post_types();
 			$this->get_supported_taxonomies();
 			$this->get_meta_fields();
-			
+
 			add_action('admin_init', array($this, 'register_meta_box'));
 			add_action('save_post', array($this, 'save_post'));
 
@@ -301,6 +301,8 @@ final class SFX_Page_Customizer {
 			add_action( 'customize_preview_init', array( $this, 'sfxpc_customize_preview_js' ) );
 			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
 			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
+			//Unhooks the hidden stuff
+			add_action( 'wp_head', array( $this, 'remove_hidden_stuff' ) );
 			// Hide the 'More' section in the customizer
 			add_filter( 'storefront_customizer_more', '__return_false' );
 		}
@@ -332,10 +334,9 @@ final class SFX_Page_Customizer {
 	public function sfxpc_customize_register( $wp_customize ) {/*Placeholder for future*/}
 
 	public function register_meta_box() {
-		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'custom_fields'), 'post');
-		add_meta_box('sfx-pc-meta-box', 'Storefront settings', array($this, 'custom_fields'), 'page');
-		//adding Storefront settings in Woocommerce product page
-		add_meta_box( 'sfx-pc-meta-box', 'Storefront settings', array($this, 'custom_fields'), 'product');
+		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this page', array($this, 'custom_fields'), 'post' );
+		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this page', array($this, 'custom_fields'), 'page' );
+		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this page', array($this, 'custom_fields'), 'product' );
 	}
 
 	public function save_post($postID) {
@@ -353,7 +354,13 @@ final class SFX_Page_Customizer {
 			$all_meta = $this->post_meta;
 			foreach($all_meta as $meta){
 				$meta_id = $this->get_meta_key($meta['section'], $meta['id']);
-				$new_val = $sfxPCValues[$meta['section']][$meta['id']];
+				switch($meta['type']){
+					case 'image':
+						$new_val = esc_url_raw($sfxPCValues[$meta['section']][$meta['id']]);
+						break;
+					default:
+						$new_val = sanitize_text_field($sfxPCValues[$meta['section']][$meta['id']]);
+				}
 				update_post_meta($postID, $meta_id, $new_val);
 			}
 		}
@@ -470,6 +477,7 @@ final class SFX_Page_Customizer {
 				'label' => 'Hide shopping cart in header',
 				'type' => 'checkbox',
 				'default' => '',
+				'css-class' => 'wc-only',
 			),
 		  //Menu Options
 			'hide-primary-menu' => array(
@@ -493,6 +501,7 @@ final class SFX_Page_Customizer {
 				'label' => 'Hide breadcrumbs',
 				'type' => 'checkbox',
 				'default' => '',
+				'css-class' => 'wc-only',
 			),
 			'page-post-title' => array(
 				'id' => 'page-post-title',
@@ -547,10 +556,16 @@ final class SFX_Page_Customizer {
 	
 	public function custom_fields() {
 		$fields = $this->post_meta;
-
+		$class = ' sfx-pc-metabox ';
+		if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+			$class .= ' woo-commerce-active ';
+		}  else {
+		}
+		echo "<div class='{$class}'>";
 		foreach ($fields as $key => $field) {
 			$this->render_field($field);
 		}
+		echo "</div>";
 	}
 
 	/**
@@ -582,6 +597,74 @@ final class SFX_Page_Customizer {
 
 	private function get_field_key($section, $id) {
 		return $this->token . '[' . $section . '][' . $id . ']';
+	}
+	
+	/**
+	 * Removes the hidden stuff via remove_action for storefront
+	 * @global type $post
+	 * @since   1.0.0
+	 * @return void
+	 */
+	public function remove_hidden_stuff(){
+		$is_shop=false;
+		if(function_exists('is_shop')){
+			if(is_shop()){
+				$is_shop = true;
+			}
+		}
+		
+		// check if this is single post or page or product or shop
+		if(!is_singular($this->supported_post_types) && !$is_shop && !is_home()) {
+			return;
+		}
+
+		global $post;
+
+
+		$showPagePostTitle = null;
+
+		//Meta values for the page
+		if($is_shop){
+			$current_post = get_option( 'woocommerce_shop_page_id' );
+		}elseif(is_home()){
+			$current_post = get_option( 'page_for_posts' );
+		}else{
+			$current_post = false;
+		}
+		
+		$hideHeader = $this->get_value('header', 'hide-header', false, $current_post);
+		$hidePrimaryNav = $this->get_value('header', 'hide-primary-menu', null, $current_post);
+		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
+		$hideHeaderCart = $this->get_value('header', 'hide-shop-cart', null, $current_post);
+		$hideBreadcrumbs = $this->get_value('header', 'hide-breadcrumbs', null, $current_post);
+		$hideTitle = $this->get_value('header', 'page-post-title', '', $current_post);
+		$hideFooter = $this->get_value('footer', 'hide-footer', false, $current_post);
+
+		if($hideHeader){
+			remove_all_actions( 'storefront_header' );
+		}
+		if($hidePrimaryNav){
+			remove_action( 'storefront_header', 'storefront_primary_navigation', 50 );
+		}
+		if($hideSecondaryNav){
+			remove_action( 'storefront_header', 'storefront_secondary_navigation', 30 );
+		}
+		if($hideHeaderCart){
+			remove_action( 'storefront_header', 'storefront_header_cart', 		60 );
+		}
+		if($hideBreadcrumbs){
+			remove_action( 'storefront_content_top', 'woocommerce_breadcrumb', 					10 );
+			$this->body_classes[] = 'no-wc-breadcrumb';
+		}
+		if($hideTitle){
+			remove_action( 'storefront_page', 'storefront_page_header',	10 );
+			remove_action( 'storefront_single_post', 'storefront_post_header', 10 );
+
+		}
+		if($hideFooter){
+			remove_all_actions('storefront_footer');
+		}
+
 	}
 
 	/**
@@ -619,7 +702,7 @@ final class SFX_Page_Customizer {
 		}else{
 			$current_post = false;
 		}
-		
+
 		$layout = $this->get_value('general', 'layout', 'right', $current_post);
 		$hideHeader = $this->get_value('header', 'hide-header', false, $current_post);
 		$hidePrimaryNav = $this->get_value('header', 'hide-primary-menu', null, $current_post);
@@ -647,7 +730,8 @@ final class SFX_Page_Customizer {
 		}elseif(is_home() && $hideTitle){
 			$css .= '.blog-header { display: none !important; }';
 		}elseif (in_array($post->post_type, $this->supported_post_types) && $hideTitle){
-			$css .= '.entry-header { display: none !important; }';
+			//Fallback for Products
+			$css .= '.product_title { display: none !important; }';
 		}
 
 		//Solving negative margin for product rating
@@ -661,19 +745,6 @@ final class SFX_Page_Customizer {
 		
 		if($hideHeader){
 			$css .= "#masthead { display:none !important; }\n";
-		}
-		if($hidePrimaryNav){
-			$css .= ".main-navigation { display:none !important; }\n";
-		}
-		if($hideSecondaryNav){
-			$css .= ".secondary-navigation { display:none !important; }\n";
-		}
-		if($hideHeaderCart){
-			$css .= ".site-header-cart.menu { display:none !important; }\n";
-		}
-		if($hideBreadcrumbs){
-			$css .= ".woocommerce-breadcrumb { display:none !important; }\n";
-			$this->body_classes[] = 'no-wc-breadcrumb';
 		}
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
@@ -801,6 +872,8 @@ final class SFX_Page_Customizer {
 	 */
 	public function render_field ( $args, $output_format = 'post', $tax_data=null ) {
 		$html = '';
+		$css_class = '';
+		if( isset($args['css-class']) ) $css_class .= $args['css-class'];
 
 		if ( ! in_array( $args['type'], array( 'text', 'checkbox', 'radio', 'textarea', 'select', 'color', 'image' ) ) ) return ''; // Supported field type sanity check.
 
@@ -824,7 +897,7 @@ final class SFX_Page_Customizer {
 
 				//Prefix to field
 				$html_prefix = ''
-				. '<tr class="form-field sfxpc-field ' . $args['id'] . '">'
+				. '<tr class="form-field sfxpc-field '  . $args['id'] . ' ' . $css_class . '">'
 				. '<th scope="row"><label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label></th>'
 				. '<td>';
 
@@ -846,7 +919,7 @@ final class SFX_Page_Customizer {
 
 				//Prefix to field
 				$html_prefix = ''
-				. '<div class="form-field sfxpc-field ' . $args['id'] . '">'
+				. '<div class="form-field sfxpc-field '  . $args['id'] . ' ' . $css_class . '">'
 				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
 
 				//Getting current value
@@ -860,7 +933,7 @@ final class SFX_Page_Customizer {
 			default:
 				//Prefix to field
 				$html_prefix = ''
-				. '<div class="field sfxpc-field ' . $args['id'] . '">'
+				. '<div class="field sfxpc-field '  . $args['id'] . ' ' . $css_class . '">'
 				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>'
 				. '<div class="control">';
 
