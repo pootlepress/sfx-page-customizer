@@ -398,14 +398,14 @@ final class SFX_Page_Customizer {
 		  //Body Controls
 			'background-image' => array(
 				'id' => 'background-image',
-				'section' => 'body',
+				'section' => 'background',
 				'label' => 'Page background image',
 				'type' => 'image',
 				'default' => '',
 			),
 			'background-repeat' => array(
 				'id' => 'background-repeat',
-				'section' => 'body',
+				'section' => 'background',
 				'label' => 'Background repeat',
 				'type' => 'radio',
 				'default' => 'repeat',
@@ -413,7 +413,7 @@ final class SFX_Page_Customizer {
 			),
 			'background-position' => array(
 				'id' => 'background-position',
-				'section' => 'body',
+				'section' => 'background',
 				'label' => 'Background position',
 				'type' => 'radio',
 				'default' => 'center',
@@ -421,7 +421,7 @@ final class SFX_Page_Customizer {
 			),
 			'background-attachment' => array(
 				'id' => 'background-attachment',
-				'section' => 'body',
+				'section' => 'background',
 				'label' => 'Background attachment',
 				'type' => 'radio',
 				'default' => 'scroll',
@@ -429,7 +429,7 @@ final class SFX_Page_Customizer {
 			),
 		  'background-color' => array(
 				'id' => 'background-color',
-				'section' => 'body',
+				'section' => 'background',
 				'label' => 'Page background color',
 				'type' => 'color',
 				'default' => $background_color,
@@ -510,23 +510,24 @@ final class SFX_Page_Customizer {
 				'type' => 'checkbox',
 				'default' => '',
 			),
+		  //Content Options
 			'body-link-color' => array(
 				'id' => 'body-link-color',
-				'section' => 'body',
+				'section' => 'content',
 				'label' => 'Typography - link / accent color',
 				'type' => 'color',
 				'default' => '',
 			),
 			'body-text-color' => array(
 				'id' => 'body-text-color',
-				'section' => 'body',
+				'section' => 'content',
 				'label' => 'Typography - text color',
 				'type' => 'color',
 				'default' => '',
 			),
 			'body-head-color' => array(
 				'id' => 'body-head-color',
-				'section' => 'body',
+				'section' => 'content',
 				'label' => 'Typography - heading color',
 				'type' => 'color',
 				'default' => '',
@@ -556,15 +557,34 @@ final class SFX_Page_Customizer {
 	
 	public function custom_fields() {
 		$fields = $this->post_meta;
-		$class = ' sfx-pc-metabox ';
+		$class = ' sfxpc-metabox sfxpc-tabs-wrapper ';
 		if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 			$class .= ' woo-commerce-active ';
 		}  else {
 		}
 		echo "<div class='{$class}'>";
+
+		$field_structure = array();
 		foreach ($fields as $key => $field) {
-			$this->render_field($field);
+			$field_structure[$field['section']][] = $field;
 		}
+		echo "<ul class='sfxpc-sections-nav nav-tab-wrapper'>";
+		  foreach( $field_structure as $sec => $fields ){
+			  $Sec = ucwords($sec);
+			echo ""
+			. "<li>"
+			  . "<a class='nav-tab' href='#sfxpc-section-{$sec}'> $Sec </a>"
+			. "</li>";
+		  }
+		echo "</ul>";
+		foreach( $field_structure as $sec => $fields ){
+			echo "<div class='sfxpc-section' id='sfxpc-section-{$sec}'>";
+			foreach ($fields as $fld){
+				$this->render_field($fld);
+			}
+			echo "</div>";
+		}
+		
 		echo "</div>";
 	}
 
@@ -714,14 +734,14 @@ final class SFX_Page_Customizer {
 		$headerBgImage = $this->get_value('header', 'header-background-image', null, $current_post);
 		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
 		$headerTextColor = $this->get_value('header', 'header-text-color', null, $current_post);
-		$BgColor = $this->get_value('body', 'background-color', null, $current_post);
-		$BgOptions = ' '.$this->get_value('body', 'background-repeat', null, $current_post).' '
-		  . $this->get_value('body', 'background-attachment', null, $current_post).' '
-		  . $this->get_value('body', 'background-position', null, $current_post);
-		$BgImage = $this->get_value('body', 'background-image', null, $current_post);
-		$bodyLinkColor = $this->get_value('body', 'body-link-color', null, $current_post);
-		$bodyTextColor = $this->get_value('body', 'body-text-color', null, $current_post);
-		$bodyHeadColor = $this->get_value('body', 'body-head-color', null, $current_post);
+		$BgColor = $this->get_value('background', 'background-color', null, $current_post);
+		$BgOptions = ' '.$this->get_value('background', 'background-repeat', null, $current_post).' '
+		  . $this->get_value('background', 'background-attachment', null, $current_post).' '
+		  . $this->get_value('background', 'background-position', null, $current_post);
+		$BgImage = $this->get_value('background', 'background-image', null, $current_post);
+		$bodyLinkColor = $this->get_value('content', 'body-link-color', null, $current_post);
+		$bodyTextColor = $this->get_value('content', 'body-text-color', null, $current_post);
+		$bodyHeadColor = $this->get_value('content', 'body-head-color', null, $current_post);
 		$hideFooter = $this->get_value('footer', 'hide-footer', false, $current_post);
 
 		//Hiding the title for Shop Page, Post, Products and Page

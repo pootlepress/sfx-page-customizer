@@ -4,6 +4,9 @@
 (function ($) {
 
     $(document).ready(function () {
+		//Tabbed Navigation
+		$('.sfxpc-tabs-wrapper').tabs();
+		
 		//Hiding background customizing options if .sfxpc-field.background-image .image-upload-path is blank
 		$bg_url = $('.sfxpc-field.background-image .image-upload-path');
 		$bg_options = $('.sfxpc-field.background-repeat, .sfxpc-field.background-position, .sfxpc-field.background-attachment');

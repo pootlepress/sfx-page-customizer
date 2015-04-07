@@ -1,5 +1,5 @@
 .sfxpc-field { 
-	margin-top: 15px;
+	margin-top: 16px;
 }
 .sfxpc-field > .label { 
 	width: 200px;
@@ -37,4 +37,24 @@
 }
 .woo-commerce-active .sfxpc-field.wc-only {
     display: block;
+}
+.sfxpc-section {
+  border: 1px solid #ccc;
+  padding: 0 7px 16px;
+}
+.sfxpc-sections-nav, .sfxpc-sections-nav li{
+	margin:0;
+	display: inline-block;
+}
+.sfxpc-sections-nav a.nav-tab{
+	display:block;
+	background: transparent;
+}
+.sfxpc-sections-nav .ui-tabs-active a{
+	background: #fff;
+}
+.sfxpc-sections-nav a:focus {
+  color: #555;
+  -webkit-box-shadow: none;
+  box-shadow: none;
 }
