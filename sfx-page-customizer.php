@@ -146,14 +146,6 @@ final class SFX_Page_Customizer {
 	public $supported_taxonomies = array();
 
 	/**
-	 * Labels of taxonomies we support.
-	 * @var     array
-	 * @access  public
-	 * @since   1.0.0
-	 */
-	public $supported_taxonomy_labels = array();
-
-	/**
 	 * All the post metas to populate.
 	 * @var     array
 	 * @access  public
@@ -404,12 +396,6 @@ final class SFX_Page_Customizer {
 		  'product_cat',
 		  'product_tag',
 		);
-		$this->supported_taxonomy_labels = array(
-		  'category' => 'Category',
-		  'post_tag' => 'Tag',
-		  'product_cat' => 'Product Category',
-		  'product_tag' => 'Product Tag',
-		);
 	}
 
 	private function get_meta_fields() {
@@ -637,8 +623,9 @@ final class SFX_Page_Customizer {
 		}
 		
 		$fields = $this->post_meta;
+		$taxonomy = get_taxonomy($term->taxonomy);
 		echo '<h2>'
-		  . 'Customize Storefront options for this ' . $this->supported_taxonomy_labels[$term->taxonomy] . ' archive'
+		  . 'Customize Storefront options for this ' . $taxonomy->labels->singular_name . ' archive'
 		. '</h2>';
 		echo '<table class="form-table">';
 		foreach ($fields as $key => $field) {
