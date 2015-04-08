@@ -766,7 +766,7 @@ final class SFX_Page_Customizer {
 			$current_post = false;
 		}
 
-		$layout = $this->get_value('general', 'layout', 'right', $current_post);
+		$layout = $this->get_value('content', 'layout', 'right', $current_post);
 		$hideHeader = $this->get_value('header', 'hide-header', false, $current_post);
 		$hidePrimaryNav = $this->get_value('header', 'hide-primary-menu', null, $current_post);
 		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
@@ -883,7 +883,8 @@ final class SFX_Page_Customizer {
 		$bodyTextColor = $tax_data['content']['body-text-color'];
 		$bodyHeadColor = $tax_data['content']['body-head-color'];
 		//General settings
-		$layout = $tax_data['general']['layout'];
+		remove_filter( 'body_class', 'storefront_layout_class' );
+		$layout = $tax_data['content']['layout'];
 
 		$hideBreadcrumbs = $tax_data['header']['hide-breadcrumbs'];
 		$hideTitle = $tax_data['header']['hide-title'];
