@@ -584,7 +584,7 @@ final class SFX_Page_Customizer {
 			  $Sec = ucwords($sec);
 			echo ""
 			. "<li>"
-			  . "<a class='nav-tab' href='#sfxpc-section-{$sec}'> $Sec </a>"
+			  . "<a href='#sfxpc-section-{$sec}'> $Sec </a>"
 			. "</li>";
 		  }
 		echo "</ul>";
@@ -1012,6 +1012,7 @@ final class SFX_Page_Customizer {
 		wp_enqueue_script('wp-color-picker');
 		wp_enqueue_script('sfxpc-admin-script', trailingslashit($this->plugin_url) . 'assets/js/admin/admin.js', array('wp-color-picker', 'jquery', 'thickbox'));
 
+		wp_enqueue_style( 'jquery-ui-style', '//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css' );
 		wp_enqueue_style('wp-color-picker');
 		wp_enqueue_style('wp-mediaelement');
 		wp_enqueue_style('thickbox');
