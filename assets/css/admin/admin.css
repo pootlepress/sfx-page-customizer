@@ -38,6 +38,9 @@
 .woo-commerce-active .sfxpc-field.wc-only {
     display: block;
 }
+.woo-commerce-active tr.sfxpc-field.wc-only {
+    display: table-row;
+}
 .sfxpc-section {
   border: 1px solid #ccc;
   padding: 0 7px 16px;

@@ -157,7 +157,7 @@ final class SFX_Page_Customizer {
 	 * Controls not to show in taxonomies
 	 * @var array
 	 */
-	public $not_in_tax = array('page-post-title', 'hide-footer', 'hide-primary-menu', 'hide-secondary-menu');
+	public $not_in_tax = array();
 
 	/**
 	 * Array of classes to be put in body
@@ -300,6 +300,7 @@ final class SFX_Page_Customizer {
 			add_action( 'customize_register', array( $this, 'sfxpc_customize_register' ) );
 			add_action( 'customize_preview_init', array( $this, 'sfxpc_customize_preview_js' ) );
 			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
+			add_filter( 'admin_body_class', array( $this, 'sfxpc_admin_body_class') );
 			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
 			//Unhooks the hidden stuff
 			add_action( 'wp_head', array( $this, 'remove_hidden_stuff' ) );
@@ -340,9 +341,9 @@ final class SFX_Page_Customizer {
 	public function sfxpc_customize_register( $wp_customize ) {/*Placeholder for future*/}
 
 	public function register_meta_box() {
-		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this page', array($this, 'custom_fields'), 'post' );
+		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this post', array($this, 'custom_fields'), 'post' );
 		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this page', array($this, 'custom_fields'), 'page' );
-		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this page', array($this, 'custom_fields'), 'product' );
+		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this product', array($this, 'custom_fields'), 'product' );
 	}
 
 	public function save_post($postID) {
@@ -517,8 +518,8 @@ final class SFX_Page_Customizer {
 				'default' => '',
 				'css-class' => 'wc-only',
 			),
-			'page-post-title' => array(
-				'id' => 'page-post-title',
+			'hide-title' => array(
+				'id' => 'hide-title',
 				'section' => 'header',
 				'label' => 'Hide page title',
 				'type' => 'checkbox',
@@ -572,10 +573,6 @@ final class SFX_Page_Customizer {
 	public function custom_fields() {
 		$fields = $this->post_meta;
 		$class = ' sfxpc-metabox sfxpc-tabs-wrapper ';
-		if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-			$class .= ' woo-commerce-active ';
-		}  else {
-		}
 		echo "<div class='{$class}'>";
 
 		$field_structure = array();
@@ -617,7 +614,7 @@ final class SFX_Page_Customizer {
 		}
 		
 		$fields = $this->post_meta;
-
+		
 		foreach ($fields as $key => $field) {
 			$this->render_field($field, $output_format, $tax_sfxpc_data);
 		}
@@ -692,7 +689,7 @@ final class SFX_Page_Customizer {
 		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
 		$hideHeaderCart = $this->get_value('header', 'hide-shop-cart', null, $current_post);
 		$hideBreadcrumbs = $this->get_value('header', 'hide-breadcrumbs', null, $current_post);
-		$hideTitle = $this->get_value('header', 'page-post-title', '', $current_post);
+		$hideTitle = $this->get_value('header', 'hide-title', '', $current_post);
 		$hideFooter = $this->get_value('footer', 'hide-footer', false, $current_post);
 
 		if($hideHeader){
@@ -771,7 +768,7 @@ final class SFX_Page_Customizer {
 		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
 		$hideHeaderCart = $this->get_value('header', 'hide-shop-cart', null, $current_post);
 		$hideBreadcrumbs = $this->get_value('header', 'hide-breadcrumbs', null, $current_post);
-		$hideTitle = $this->get_value('header', 'page-post-title', '', $current_post);
+		$hideTitle = $this->get_value('header', 'hide-title', '', $current_post);
 		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
 		$headerBgImage = $this->get_value('header', 'header-background-image', null, $current_post);
 		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
@@ -849,22 +846,74 @@ final class SFX_Page_Customizer {
 		$term = get_queried_object();
 		$setting_name = $this->token. '-cat' . $term->term_id;
 		$tax_data = get_option($setting_name);
-		
+
+		if(!isset($tax_data['header']['hide-header']))$tax_data['header']['hide-header'] = false;
+		if(!isset($tax_data['header']['hide-primary-menu']))$tax_data['header']['hide-primary-menu'] = false;
+		if(!isset($tax_data['header']['hide-secondary-menu']))$tax_data['header']['hide-secondary-menu'] = false;
+		if(!isset($tax_data['header']['hide-shop-cart']))$tax_data['header']['hide-shop-cart'] = false;
+		if(!isset($tax_data['header']['hide-breadcrumbs']))$tax_data['header']['hide-breadcrumbs'] = false;
+		if(!isset($tax_data['header']['hide-title']))$tax_data['header']['hide-title'] = false;
+		if(!isset($tax_data['footer']['hide-footer']))$tax_data['footer']['hide-footer'] = false;
+	
 		if(!$tax_data)return;
 		
-		// $pagePostTitleMeta= $tax_data['header']['color'];
+		//Background options
+		$BgImage = $tax_data['background']['background-image'];
+		$BgOptions = ' '.$tax_data['background']['background-repeat'].' '
+		  . $tax_data['background']['background-attachment'].' '
+		  . $tax_data['background']['background-position'];
+		$BgColor  = $tax_data['background']['background-color'];
+
+		//Header
+		$hideHeader = $tax_data['header']['hide-header'];
 		$headerBgColor = $tax_data['header']['header-background-color'];
 		$headerBgImage = $tax_data['header']['header-background-image'];
 		$headerTextColor = $tax_data['header']['header-text-color'];
 		$headerLinkColor = $tax_data['header']['header-link-color'];
-		$BgImage = $tax_data['body']['background-image'];
-		$BgOptions = ' '.$tax_data['body']['background-repeat'].' '
-		  . $tax_data['body']['background-attachment'].' '
-		  . $tax_data['body']['background-position'];
+		$hidePrimaryNav = $tax_data['header']['hide-primary-menu'];
+		$hideSecondaryNav = $tax_data['header']['hide-secondary-menu'];
+		$hideHeaderCart = $tax_data['header']['hide-shop-cart'];
 
-		$BgColor  = $tax_data['body']['background-color'];
-		
+		//Content
+		$bodyLinkColor = $tax_data['content']['body-link-color'];
+		$bodyTextColor = $tax_data['content']['body-text-color'];
+		$bodyHeadColor = $tax_data['content']['body-head-color'];
+		//General settings
+		$layout = $tax_data['general']['layout'];
+
+		$hideBreadcrumbs = $tax_data['header']['hide-breadcrumbs'];
+		$hideTitle = $tax_data['header']['hide-title'];
+		$hideFooter = $tax_data['footer']['hide-footer'];
+
 		$css = '';
+
+		//For layout
+		$this->body_classes[] = $layout . '-sidebar';
+
+		if($hideHeader){
+			remove_all_actions( 'storefront_header' );
+			$css .= "#masthead { display:none !important; }\n";
+		}
+		if($hidePrimaryNav){
+			remove_action( 'storefront_header', 'storefront_primary_navigation', 50 );
+		}
+		if($hideSecondaryNav){
+			remove_action( 'storefront_header', 'storefront_secondary_navigation', 30 );
+		}
+		if($hideHeaderCart){
+			remove_action( 'storefront_header', 'storefront_header_cart', 		60 );
+		}
+		if($hideBreadcrumbs){
+			remove_action( 'storefront_content_top', 'woocommerce_breadcrumb', 					10 );
+			$this->body_classes[] = 'no-wc-breadcrumb';
+		}
+		if($hideTitle){
+			$css .= ".page-title { display:none !important; }\n";
+		}
+		if($hideFooter){
+			remove_all_actions('storefront_footer');
+			$css .= "footer.site-footer { display:none !important; }\n";
+		}
 		if ($headerBgColor) {
 			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "#masthead { background: {$headerBgColor} !important; }"
@@ -890,6 +939,17 @@ final class SFX_Page_Customizer {
 		if ($BgImage) {
 			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
 		}
+
+		if($bodyLinkColor){
+			$css .= "a { color: $bodyLinkColor !important; }";
+		}
+		if($bodyTextColor){
+			$css .= "body, .secondary-navigation a, .widget-area .widget a, .onsale, #comments .comment-list .reply a { color: $bodyTextColor !important; }";
+		}
+		if($bodyHeadColor){
+			$css .= "h1, h2, h3, h4, h5, h6 { color: $bodyHeadColor !important; }";
+		}
+
 		return $css;
 	}
 
@@ -906,7 +966,7 @@ final class SFX_Page_Customizer {
 		if(is_home()){
 		/*
 			$current_post_id = get_option( 'page_for_posts' );
-			$pagePostTitleMeta = $this->get_value('header', 'page-post-title', 'default', $current_post_id);
+			$pagePostTitleMeta = $this->get_value('header', 'hide-title', 'default', $current_post_id);
 			if($pagePostTitleMeta=='show'){
 			?>
 		$('#main')
@@ -932,7 +992,7 @@ final class SFX_Page_Customizer {
 
 		if($pagenow=='edit-tags.php'){
 			//Though everything is commented this if section is still important coz it prevents returning the function
-			//wp_enqueue_script('wp-color-picker');
+			wp_enqueue_media();
 			//wp_enqueue_script('sfxpc-tax-script', trailingslashit($this->plugin_url) . 'assets/js/admin/taxonomy.js', array('wp-color-picker', 'thickbox', 'jquery'));
 		}elseif(
 		  (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php'))
@@ -944,10 +1004,12 @@ final class SFX_Page_Customizer {
 
 		// only in post and page create and edit screen
 
+		wp_enqueue_script('jquery-ui-tabs');
 		wp_enqueue_script('wp-color-picker');
 		wp_enqueue_script('sfxpc-admin-script', trailingslashit($this->plugin_url) . 'assets/js/admin/admin.js', array('wp-color-picker', 'jquery', 'thickbox'));
 
 		wp_enqueue_style('wp-color-picker');
+		wp_enqueue_style('wp-mediaelement');
 		wp_enqueue_style('thickbox');
 		wp_enqueue_style('sfxpc-admin-style', trailingslashit($this->plugin_url) . 'assets/css/admin/admin.css');
 	}
@@ -969,6 +1031,12 @@ final class SFX_Page_Customizer {
 	public function sfxpc_body_class( $classes ) {
 		$this->body_classes[] = 'sfx-page-customizer-active';
 		return array_merge($classes, $this->body_classes);
+	}
+	function sfxpc_admin_body_class( $classes ){
+		if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+			$classes .= ' woo-commerce-active ';
+		}
+		return $classes;
 	}
 
 	/**
@@ -1025,7 +1093,7 @@ final class SFX_Page_Customizer {
 
 				break;
 			case 'termAdd':
-				if($args['id'] == 'page-post-title')return;
+				if($args['id'] == 'hide-title')return;
 
 				//Prefix to field
 				$html_prefix = ''
