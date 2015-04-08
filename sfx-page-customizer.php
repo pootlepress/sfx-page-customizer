@@ -146,6 +146,14 @@ final class SFX_Page_Customizer {
 	public $supported_taxonomies = array();
 
 	/**
+	 * Labels of taxonomies we support.
+	 * @var     array
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $supported_taxonomy_labels = array();
+
+	/**
 	 * All the post metas to populate.
 	 * @var     array
 	 * @access  public
@@ -396,6 +404,12 @@ final class SFX_Page_Customizer {
 		  'product_cat',
 		  'product_tag',
 		);
+		$this->supported_taxonomy_labels = array(
+		  'category' => 'Category',
+		  'post_tag' => 'Tag',
+		  'product_cat' => 'Product Category',
+		  'product_tag' => 'Product Tag',
+		);
 	}
 
 	private function get_meta_fields() {
@@ -603,11 +617,20 @@ final class SFX_Page_Customizer {
 		global $pagenow;
 		$id = $term;
 		$tax_sfxpc_data = null;
-		
+
 		if(isset($_REQUEST['action'])){
 			$output_format = 'termEdit';
 			$setting_name = $this->token. '-cat' . $term->term_id;
 			$tax_sfxpc_data = get_option($setting_name);
+
+			if(!isset($tax_sfxpc_data['header']['hide-header']))$tax_sfxpc_data['header']['hide-header'] = false;
+			if(!isset($tax_sfxpc_data['header']['hide-primary-menu']))$tax_sfxpc_data['header']['hide-primary-menu'] = false;
+			if(!isset($tax_sfxpc_data['header']['hide-secondary-menu']))$tax_sfxpc_data['header']['hide-secondary-menu'] = false;
+			if(!isset($tax_sfxpc_data['header']['hide-shop-cart']))$tax_sfxpc_data['header']['hide-shop-cart'] = false;
+			if(!isset($tax_sfxpc_data['header']['hide-breadcrumbs']))$tax_sfxpc_data['header']['hide-breadcrumbs'] = false;
+			if(!isset($tax_sfxpc_data['header']['hide-title']))$tax_sfxpc_data['header']['hide-title'] = false;
+			if(!isset($tax_sfxpc_data['footer']['hide-footer']))$tax_sfxpc_data['footer']['hide-footer'] = false;
+
 
 		}else{
 			$output_format = 'termAdd';
@@ -615,7 +638,7 @@ final class SFX_Page_Customizer {
 		
 		$fields = $this->post_meta;
 		echo '<h2>'
-		  . 'Customize Storefront options for this category archive'
+		  . 'Customize Storefront options for this ' . $this->supported_taxonomy_labels[$term->taxonomy] . ' archive'
 		. '</h2>';
 		echo '<table class="form-table">';
 		foreach ($fields as $key => $field) {
