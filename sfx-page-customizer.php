@@ -308,7 +308,7 @@ final class SFX_Page_Customizer {
 			add_filter( 'storefront_customizer_more', '__return_false' );
 			foreach ($this->supported_taxonomies as $tax){
 				//add_action( "{$tax}_add_form_fields", array( $this, 'tax_custom_fields'));
-				add_action( "{$tax}_edit_form_fields", array( $this, 'tax_custom_fields' ) );
+				add_action( "{$tax}_edit_form", array( $this, 'tax_custom_fields' ) );
 				//add_action( 'create_terms', array( $this, 'save_term_fields' ) );
 				add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
 			}
@@ -614,10 +614,14 @@ final class SFX_Page_Customizer {
 		}
 		
 		$fields = $this->post_meta;
-		
+		echo '<h2>'
+		  . 'Customize Storefront options for this category archive'
+		. '</h2>';
+		echo '<table class="form-table">';
 		foreach ($fields as $key => $field) {
 			$this->render_field($field, $output_format, $tax_sfxpc_data);
 		}
+		echo '</table>';
 	}
  
 	/**

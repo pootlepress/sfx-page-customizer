@@ -16,7 +16,7 @@
 .sfxpc-field > .image-upload-path {
 	width: 200px;
 }
-.sfxpc-field.layout > * {
+.sfxpc-metabox .sfxpc-field.layout > * {
 	vertical-align: middle;
 	display: inline-block;
 }
