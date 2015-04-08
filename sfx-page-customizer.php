@@ -550,7 +550,7 @@ final class SFX_Page_Customizer {
 		  //Layout
 			'layout' => array(
 				'id' => 'layout',
-				'section' => 'general',
+				'section' => 'content',
 				'label' => 'Layout',
 				'type' => 'radio',
 				'default' => 'right',
