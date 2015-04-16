@@ -120,7 +120,7 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 */
 	public $admin;
- 
+
  	/**
 	 * The settings object.
 	 * @var     object
@@ -170,7 +170,6 @@ final class SFX_Page_Customizer {
 	 * Constructor function.
 	 * @access  public
 	 * @since   1.0.0
-	 * @return  void
 	 */
 	public function __construct() {
 		$this->token 			= 'sfx-page-customizer';
@@ -307,9 +306,7 @@ final class SFX_Page_Customizer {
 			// Hide the 'More' section in the customizer
 			add_filter( 'storefront_customizer_more', '__return_false' );
 			foreach ($this->supported_taxonomies as $tax){
-				//add_action( "{$tax}_add_form_fields", array( $this, 'tax_custom_fields'));
 				add_action( "{$tax}_edit_form", array( $this, 'tax_custom_fields' ) );
-				//add_action( 'create_terms', array( $this, 'save_term_fields' ) );
 				add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
 			}
 		}
@@ -399,10 +396,6 @@ final class SFX_Page_Customizer {
 	}
 
 	private function get_meta_fields() {
-	//	$header_text_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_text_color', apply_filters( 'storefront_default_header_text_color', '#5a6567' ) ) );
-	//	$header_link_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_link_color', apply_filters( 'storefront_default_header_link_color', '#ffffff' ) ) );
-	//	$header_background_color = storefront_sanitize_hex_color( get_theme_mod( 'storefront_header_background_color', apply_filters( 'storefront_default_header_background_color', '#2c2d33' ) ) );
-	//	$background_color = '#'.get_background_color();
 
 		$header_text_color = '';
 		$header_link_color = '';
@@ -635,11 +628,11 @@ final class SFX_Page_Customizer {
  
 	/**
 	 * Gets value of post meta
-	 * @global type $post
-	 * @param type $section
-	 * @param type $id
-	 * @param type $default
-	 * @param type $post_id
+	 * @global string $post
+	 * @param string $section
+	 * @param string $id
+	 * @param string $default
+	 * @param string $post_id
 	 * @return string
 	 */
 	protected function get_value($section, $id, $default = null, $post_id=false) {
@@ -963,21 +956,6 @@ final class SFX_Page_Customizer {
 	?>
 	<script id='sfx-pc-script'>
 	jQuery(document).ready(function($){
-		<?php
-		if(is_home()){
-		/*
-			$current_post_id = get_option( 'page_for_posts' );
-			$pagePostTitleMeta = $this->get_value('header', 'hide-title', 'default', $current_post_id);
-			if($pagePostTitleMeta=='show'){
-			?>
-		$('#main')
-			.prepend('<header class="entry-header blog-header"><h1 class="entry-title" itemprop="name"><?php echo get_the_title($current_post_id); ?></h1></header>')
-			.addClass('hentry');
-			<?php
-			}
-		*/
-		}
-	?>
 	})
 	</script>
 	<?php
@@ -1034,7 +1012,13 @@ final class SFX_Page_Customizer {
 		$this->body_classes[] = 'sfx-page-customizer-active';
 		return array_merge($classes, $this->body_classes);
 	}
-	function sfxpc_admin_body_class( $classes ){
+	
+	/**
+	 * Adds required classes to admin
+	 * @param string $classes
+	 * @return string
+	 */
+	public function sfxpc_admin_body_class( $classes ){
 		if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 			$classes .= ' woo-commerce-active ';
 		}
