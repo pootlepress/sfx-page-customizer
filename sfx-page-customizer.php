@@ -3,7 +3,7 @@
  * Plugin Name: Storefront Page Customizer
  * Plugin URI: http://woothemes.com/products/sfx-page-customizer/
  * Description:	Adds options for individual pages, posts and products underneath the WordPress editor. Change background image and color, header background image and color, hide titles, menus, breadcrumbs, layouts and footer.
- * Version: 1.0.0
+ * Version: 0.9-beta.1
  * Author: PootlePress
  * Author URI: http://pootlepress.com/
  * Requires at least: 4.0.0
