@@ -601,7 +601,6 @@ final class SFX_Page_Customizer {
 	
 	public function tax_custom_fields($term) {
 		global $pagenow;
-		$id = $term;
 		$tax_sfxpc_data = null;
 
 		if(isset($_REQUEST['action'])){
@@ -686,9 +685,6 @@ final class SFX_Page_Customizer {
 
 		global $post;
 
-
-		$showPagePostTitle = null;
-
 		//Meta values for the page
 		if($is_shop){
 			$current_post = get_option( 'woocommerce_shop_page_id' );
@@ -765,8 +761,6 @@ final class SFX_Page_Customizer {
 
 		$css = '';
 
-		$showPagePostTitle = null;
-
 		//Meta values for the page
 		if($is_shop){
 			$current_post = get_option( 'woocommerce_shop_page_id' );
@@ -778,10 +772,6 @@ final class SFX_Page_Customizer {
 
 		$layout = $this->get_value('content', 'layout', 'right', $current_post);
 		$hideHeader = $this->get_value('header', 'hide-header', false, $current_post);
-		$hidePrimaryNav = $this->get_value('header', 'hide-primary-menu', null, $current_post);
-		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
-		$hideHeaderCart = $this->get_value('header', 'hide-shop-cart', null, $current_post);
-		$hideBreadcrumbs = $this->get_value('header', 'hide-breadcrumbs', null, $current_post);
 		$hideTitle = $this->get_value('header', 'hide-title', '', $current_post);
 		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
 		$headerBgImage = $this->get_value('header', 'header-background-image', null, $current_post);
@@ -820,7 +810,6 @@ final class SFX_Page_Customizer {
 			$css .= "#masthead { display:none !important; }\n";
 		}
 		if ($headerBgColor) {
-			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "#masthead { background: {$headerBgColor} !important; }"
 				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
 		}
@@ -834,7 +823,6 @@ final class SFX_Page_Customizer {
 			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
 		}
 		if ($BgColor) {
-			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
 		}
 		if($bodyLinkColor){
@@ -930,7 +918,6 @@ final class SFX_Page_Customizer {
 			$css .= "footer.site-footer { display:none !important; }\n";
 		}
 		if ($headerBgColor) {
-			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "#masthead { background: {$headerBgColor} !important; }"
 				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
 		}
@@ -948,7 +935,6 @@ final class SFX_Page_Customizer {
 		}
 		
 		if ($BgColor) {
-			$headerBgColorDark = storefront_adjust_color_brightness($headerBgColor, -16);
 			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
 		}
 		if ($BgImage) {
