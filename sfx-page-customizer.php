@@ -158,8 +158,7 @@ final class SFX_Page_Customizer {
 	 * @var array 
 	 */
 	public $body_classes = array();
-
-
+	
 	/**
 	 * Constructor function.
 	 * @access  public
@@ -283,10 +282,8 @@ final class SFX_Page_Customizer {
 			$this->get_supported_post_types();
 			$this->get_supported_taxonomies();
 			$this->get_meta_fields();
-
 			add_action('admin_init', array($this, 'register_meta_box'));
 			add_action('save_post', array($this, 'save_post'));
-
 			add_action('admin_print_scripts', array($this, 'admin_scripts'));
 			add_action( 'wp_enqueue_scripts', array( $this, 'sfxpc_styles' ), 999 );
 			add_action( 'admin_print_scripts', array( $this, 'sfxpc_script' ), 999 );
@@ -294,8 +291,6 @@ final class SFX_Page_Customizer {
 			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
 			add_filter( 'admin_body_class', array( $this, 'sfxpc_admin_body_class') );
 			add_action( 'admin_notices', array( $this, 'sfxpc_customizer_notice' ) );
-			//Unhooks the hidden stuff
-			add_action( 'wp_head', array( $this, 'remove_hidden_stuff' ) );
 			// Hide the 'More' section in the customizer
 			add_filter( 'storefront_customizer_more', '__return_false' );
 			foreach ($this->supported_taxonomies as $tax){
@@ -329,6 +324,8 @@ final class SFX_Page_Customizer {
 	}
 
 	public function save_post($postID) {
+		
+		//Checking Nonce
 		if ( ! isset( $_POST['sfx-pc-nonce'] ) || ! wp_verify_nonce( $_POST['sfx-pc-nonce'], 'sfx-pc-post-meta' ) ){
 			return;
 		}
@@ -336,26 +333,15 @@ final class SFX_Page_Customizer {
 		$post = get_post($postID);
 		 
 		//check if post type is post,page or product
-		if (!in_array($post->post_type, $this->supported_post_types)) {
+		if ( !in_array($post->post_type, $this->supported_post_types) || !isset($_POST[$this->token]) ) {
 			return;
 		}
 
-		if (isset($_POST[$this->token]) && is_array($_POST[$this->token])) {
-			$sfxPCValues = $_POST[$this->token];
+		//Caching postdata
+		$data = $_POST[$this->token];
 
-			//Automating the saving of our post metas
-			$all_meta = $this->post_meta;
-			foreach($all_meta as $meta){
-				$meta_id = $this->get_meta_key($meta['section'], $meta['id']);
-				switch($meta['type']){
-					case 'image':
-						$new_val = esc_url_raw($sfxPCValues[$meta['section']][$meta['id']]);
-						break;
-					default:
-						$new_val = sanitize_text_field($sfxPCValues[$meta['section']][$meta['id']]);
-				}
-				update_post_meta($postID, $meta_id, $new_val);
-			}
+		if ( is_array($data)) {
+			update_post_meta($postID, $this->token, $data);
 		}
 	}
 
@@ -557,14 +543,20 @@ final class SFX_Page_Customizer {
 		);
 	}
 	
-	public function custom_fields() {
+	/**
+	 * PostMeta Callback
+	 * 
+	 * @param postObject $post
+	 */
+	public function custom_fields( $post ) {
 		$fields = $this->post_meta;
 		$class = ' sfxpc-metabox sfxpc-tabs-wrapper ';
+		$postMetaValues = get_post_meta( $post->ID , $this->token , true);
 		echo "<div class='{$class}'>";
 
 		//WP Nonce
 		wp_nonce_field( 'sfx-pc-post-meta', 'sfx-pc-nonce' );
-
+		
 		$field_structure = array();
 		foreach ($fields as $key => $field) {
 			$field_structure[$field['section']][] = $field;
@@ -572,16 +564,13 @@ final class SFX_Page_Customizer {
 		echo "<ul class='sfxpc-sections-nav nav-tab-wrapper'>";
 		  foreach( $field_structure as $sec => $fields ){
 			  $Sec = ucwords($sec);
-			echo ""
-			. "<li>"
-			  . "<a href='#sfxpc-section-{$sec}'> $Sec </a>"
-			. "</li>";
+			echo "<li> <a href='#sfxpc-section-{$sec}'> $Sec </a> </li>";
 		  }
 		echo "</ul>";
 		foreach( $field_structure as $sec => $fields ){
 			echo "<div class='sfxpc-section' id='sfxpc-section-{$sec}'>";
 			foreach ($fields as $fld){
-				$this->render_field($fld);
+				$this->render_field($fld, 'post', $postMetaValues);
 			}
 			echo "</div>";
 		}
@@ -590,31 +579,14 @@ final class SFX_Page_Customizer {
 	}
 	
 	public function tax_custom_fields($term) {
-		global $pagenow;
-		$tax_sfxpc_data = null;
 
-		$output_format = '';
+		$output_format = 'termEdit';
+		$tax_sfxpc_data = get_option( $this->token. '-cat' . $term->term_id );
 
-		if(isset($_GET['action'])){
-			$output_format = null;
-			$setting_name = $this->token. '-cat' . $term->term_id;
-			$tax_sfxpc_data = get_option($setting_name);
-
-			if(!isset($tax_sfxpc_data['header']['hide-header']))$tax_sfxpc_data['header']['hide-header'] = false;
-			if(!isset($tax_sfxpc_data['header']['hide-primary-menu']))$tax_sfxpc_data['header']['hide-primary-menu'] = false;
-			if(!isset($tax_sfxpc_data['header']['hide-secondary-menu']))$tax_sfxpc_data['header']['hide-secondary-menu'] = false;
-			if(!isset($tax_sfxpc_data['header']['hide-shop-cart']))$tax_sfxpc_data['header']['hide-shop-cart'] = false;
-			if(!isset($tax_sfxpc_data['header']['hide-breadcrumbs']))$tax_sfxpc_data['header']['hide-breadcrumbs'] = false;
-			if(!isset($tax_sfxpc_data['header']['hide-title']))$tax_sfxpc_data['header']['hide-title'] = false;
-			if(!isset($tax_sfxpc_data['footer']['hide-footer']))$tax_sfxpc_data['footer']['hide-footer'] = false;
-
-		}
-		
 		$fields = $this->post_meta;
+
 		$taxonomy = get_taxonomy($term->taxonomy);
-		echo '<h2>'
-		  . 'Customize Storefront options for this ' . $taxonomy->labels->singular_name . ' archive'
-		. '</h2>';
+		echo '<h2>Customize Storefront options for this ' . $taxonomy->labels->singular_name . ' archive</h2>';
 
 		//Nonce
 		wp_nonce_field( 'sfx-pc-tax-meta', 'sfx-pc-nonce' );
@@ -656,24 +628,13 @@ final class SFX_Page_Customizer {
 	private function get_field_key($section, $id) {
 		return $this->token . '[' . $section . '][' . $id . ']';
 	}
-	
-	/**
-	 * Removes the hidden stuff via remove_action for storefront
-	 * @global type $post
-	 * @since   1.0.0
-	 * @return void
-	 */
-	public function remove_hidden_stuff(){
+
+	public function get_post_settings(){
+
 		$is_shop=false;
-		if(function_exists('is_shop')){
-			if(is_shop()){
-				$is_shop = true;
-			}
-		}
-		
-		// check if this is single post or page or product or shop
-		if(!is_singular($this->supported_post_types) && !$is_shop && !is_home()) {
-			return;
+
+		if(function_exists('is_shop') && is_shop()){
+			$is_shop = true;
 		}
 
 		global $post;
@@ -684,41 +645,27 @@ final class SFX_Page_Customizer {
 		}elseif(is_home()){
 			$current_post = get_option( 'page_for_posts' );
 		}else{
-			$current_post = null;
+			$current_post = $post->ID;
 		}
-		
-		$hideHeader = $this->get_value('header', 'hide-header', null, $current_post);
-		$hidePrimaryNav = $this->get_value('header', 'hide-primary-menu', null, $current_post);
-		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
-		$hideHeaderCart = $this->get_value('header', 'hide-shop-cart', null, $current_post);
-		$hideBreadcrumbs = $this->get_value('header', 'hide-breadcrumbs', null, $current_post);
-		$hideTitle = $this->get_value('header', 'hide-title', null, $current_post);
-		$hideFooter = $this->get_value('footer', 'hide-footer', null, $current_post);
 
-		if($hideHeader){
-			remove_all_actions( 'storefront_header' );
-		}
-		if($hidePrimaryNav){
-			remove_action( 'storefront_header', 'storefront_primary_navigation', 50 );
-		}
-		if($hideSecondaryNav){
-			remove_action( 'storefront_header', 'storefront_secondary_navigation', 30 );
-		}
-		if($hideHeaderCart){
-			remove_action( 'storefront_header', 'storefront_header_cart', 		60 );
-		}
-		if($hideBreadcrumbs){
-			remove_action( 'storefront_content_top', 'woocommerce_breadcrumb', 					10 );
-			$this->body_classes[] = 'no-wc-breadcrumb';
-		}
-		if($hideTitle){
-			remove_action( 'storefront_page', 'storefront_page_header',	10 );
-			remove_action( 'storefront_single_post', 'storefront_post_header', 10 );
+		return get_post_meta( $current_post , $this->token , true);
 
-		}
-		if($hideFooter){
-			remove_all_actions('storefront_footer');
-		}
+	}
+
+	/**
+	 * Taxonomy Style
+	 * 
+	 * @TODO Get rid of it
+	 * @return void|null
+	 */
+	public function get_tax_settings(){
+
+		//Get term object
+		$term = get_queried_object();
+		//Get the setting name
+		$setting_name = $this->token. '-cat' . $term->term_id;
+		//Return the settings (option)
+		return get_option($setting_name);
 
 	}
 
@@ -732,219 +679,151 @@ final class SFX_Page_Customizer {
 
 		//Check if it is a supported taxonomy term archive
 		if(is_tax($this->supported_taxonomies) || is_tag() || is_category()){
-			$css = $this->sfxpc_tax_styles();
-			wp_add_inline_style( 'sfxpc-styles', $css );
-			return;
-		}
-		
-		$is_shop=false;
-		if(function_exists('is_shop')){
-			if(is_shop()){
-				$is_shop = true;
+			$settings = $this->get_tax_settings();
+		}else{
+			if( ! $settings = $this->get_post_settings() ){	
+				return;
 			}
 		}
-		
-		
-		// check if this is single post or page or product or shop
-		if(!is_singular($this->supported_post_types) && !$is_shop && !is_home()) {
-			return;
-		}
-
-		global $post;
-
+ 
 		$css = '';
 
-		//Meta values for the page
-		if($is_shop){
-			$current_post = get_option( 'woocommerce_shop_page_id' );
-		}elseif(is_home()){
-			$current_post = get_option( 'page_for_posts' );
-		}else{
-			$current_post = null;
-		}
-
-		$layout = $this->get_value('content', 'layout', 'right', $current_post);
-		$hideHeader = $this->get_value('header', 'hide-header', null, $current_post);
-		$hideTitle = $this->get_value('header', 'hide-title', '', $current_post);
-		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
-		$headerBgImage = $this->get_value('header', 'header-background-image', null, $current_post);
-		$headerLinkColor = $this->get_value('header', 'header-link-color', null, $current_post);
-		$headerTextColor = $this->get_value('header', 'header-text-color', null, $current_post);
-		$BgColor = $this->get_value('background', 'background-color', null, $current_post);
-		$BgOptions = ' '.$this->get_value('background', 'background-repeat', null, $current_post).' '
-		  . $this->get_value('background', 'background-attachment', null, $current_post).' '
-		  . $this->get_value('background', 'background-position', null, $current_post);
-		$BgImage = $this->get_value('background', 'background-image', null, $current_post);
-		$bodyLinkColor = $this->get_value('content', 'body-link-color', null, $current_post);
-		$bodyTextColor = $this->get_value('content', 'body-text-color', null, $current_post);
-		$bodyHeadColor = $this->get_value('content', 'body-head-color', null, $current_post);
-		$hideFooter = $this->get_value('footer', 'hide-footer', null, $current_post);
-
-		//Hiding the title for Shop Page, Post, Products and Page
-		if($is_shop && $hideTitle){
-			$css .= '.page-title { display: none !important; }';
-		}elseif(is_home() && $hideTitle){
-			$css .= '.blog-header { display: none !important; }';
-		}elseif (in_array($post->post_type, $this->supported_post_types) && $hideTitle){
-			//Fallback for Products
-			$css .= '.product_title { display: none !important; }';
-		}
-
-		//Solving negative margin for product rating
-		if (in_array($post->post_type, array('product')) && $hideTitle){
-			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
-		}
-
-		//Layout
-		remove_filter( 'body_class', 'storefront_layout_class' );
-		$this->body_classes[] = $layout . '-sidebar';
-		
-		if($hideHeader){
-			$css .= "#masthead { display:none !important; }\n";
-		}
-		if ($headerBgColor) {
-			$css .= "#masthead { background: {$headerBgColor} !important; }"
-				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
-		}
-		if ($headerBgImage) {
-			$css .= "#masthead { background-image: url('$headerBgImage') !important; }\n";
-		}
-		if($headerLinkColor){
-			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
-		}
-		if($headerTextColor){
-			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
-		}
-		if ($BgColor) {
-			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
-		}
-		if($bodyLinkColor){
-			$css .= "a { color: $bodyLinkColor !important; }";
-		}
-		if($bodyTextColor){
-			$css .= "body, .secondary-navigation a, .widget-area .widget a, .onsale, #comments .comment-list .reply a { color: $bodyTextColor !important; }";
-		}
-		if($bodyHeadColor){
-			$css .= "h1, h2, h3, h4, h5, h6 { color: $bodyHeadColor !important; }";
-		}
-		if ($BgImage) {
-			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
-		}
-		if($hideFooter){
+		//BG styles
+		$css .= $this->background_styles( $settings['background'] );
+		//Header styles
+		$css .= $this->header_styles( $settings['header'] );
+		//Content styles
+		$css .= $this->content_styles( $settings['content'] );
+		//Footer styles
+		if( ! empty( $settings['footer']['hide-footer'] ) ){
+			remove_all_actions('storefront_footer');
 			$css .= "footer.site-footer { display:none !important; }\n";
 		}
 
 		wp_add_inline_style( 'sfxpc-styles', $css );
 	}
 
-	public function sfxpc_tax_styles(){
-		$term = get_queried_object();
-		$setting_name = $this->token. '-cat' . $term->term_id;
-		$tax_data = get_option($setting_name);
-
-		if(!isset($tax_data['header']['hide-header']))$tax_data['header']['hide-header'] = false;
-		if(!isset($tax_data['header']['hide-primary-menu']))$tax_data['header']['hide-primary-menu'] = false;
-		if(!isset($tax_data['header']['hide-secondary-menu']))$tax_data['header']['hide-secondary-menu'] = false;
-		if(!isset($tax_data['header']['hide-shop-cart']))$tax_data['header']['hide-shop-cart'] = false;
-		if(!isset($tax_data['header']['hide-breadcrumbs']))$tax_data['header']['hide-breadcrumbs'] = false;
-		if(!isset($tax_data['header']['hide-title']))$tax_data['header']['hide-title'] = false;
-		if(!isset($tax_data['footer']['hide-footer']))$tax_data['footer']['hide-footer'] = false;
-	
-		if(!$tax_data)return;
-		
-		//Background options
-		$BgImage = $tax_data['background']['background-image'];
-		$BgOptions = ' '.$tax_data['background']['background-repeat'].' '
-		  . $tax_data['background']['background-attachment'].' '
-		  . $tax_data['background']['background-position'];
-		$BgColor  = $tax_data['background']['background-color'];
-
-		//Header
-		$hideHeader = $tax_data['header']['hide-header'];
-		$headerBgColor = $tax_data['header']['header-background-color'];
-		$headerBgImage = $tax_data['header']['header-background-image'];
-		$headerTextColor = $tax_data['header']['header-text-color'];
-		$headerLinkColor = $tax_data['header']['header-link-color'];
-		$hidePrimaryNav = $tax_data['header']['hide-primary-menu'];
-		$hideSecondaryNav = $tax_data['header']['hide-secondary-menu'];
-		$hideHeaderCart = $tax_data['header']['hide-shop-cart'];
-
-		//Content
-		$bodyLinkColor = $tax_data['content']['body-link-color'];
-		$bodyTextColor = $tax_data['content']['body-text-color'];
-		$bodyHeadColor = $tax_data['content']['body-head-color'];
-		//General settings
-		remove_filter( 'body_class', 'storefront_layout_class' );
-		$layout = $tax_data['content']['layout'];
-
-		$hideBreadcrumbs = $tax_data['header']['hide-breadcrumbs'];
-		$hideTitle = $tax_data['header']['hide-title'];
-		$hideFooter = $tax_data['footer']['hide-footer'];
-
+	/**
+	 * Background styles.
+	 * 
+	 * @since   1.0.0
+	 * @param string|null $current_post
+	 * @return  string CSS for header
+	 */
+	public function background_styles( $bg ) {
 		$css = '';
 
-		//For layout
-		$this->body_classes[] = $layout . '-sidebar';
+		//Preparing BG Option
+		$BgOptions = ' '.$bg['background-repeat'] . ' '
+		  . $bg['background-attachment'] . ' '
+		  . $bg['background-position'];
 
-		if($hideHeader){
-			remove_all_actions( 'storefront_header' );
-			$css .= "#masthead { display:none !important; }\n";
+		if ( $bg['background-color'] ) {
+			$css .= "body.sfx-page-customizer-active { background: {$bg['background-color']} !important; }";
 		}
-		if($hidePrimaryNav){
-			remove_action( 'storefront_header', 'storefront_primary_navigation', 50 );
-		}
-		if($hideSecondaryNav){
-			remove_action( 'storefront_header', 'storefront_secondary_navigation', 30 );
-		}
-		if($hideHeaderCart){
-			remove_action( 'storefront_header', 'storefront_header_cart', 		60 );
-		}
-		if($hideBreadcrumbs){
-			remove_action( 'storefront_content_top', 'woocommerce_breadcrumb', 					10 );
-			$this->body_classes[] = 'no-wc-breadcrumb';
-		}
-		if($hideTitle){
-			$css .= ".page-title { display:none !important; }\n";
-		}
-		if($hideFooter){
-			remove_all_actions('storefront_footer');
-			$css .= "footer.site-footer { display:none !important; }\n";
-		}
-		if ($headerBgColor) {
-			$css .= "#masthead { background: {$headerBgColor} !important; }"
-				. ".sub-menu , .site-header-cart .widget_shopping_cart { background: {$headerBgColor} !important; }\n";
-		}
-
-		if ($headerBgImage) {
-			$css .= "#masthead { background-image: url('$headerBgImage') !important; }\n";
-		}
-
-		if($headerLinkColor){
-			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: $headerLinkColor !important; }";
-		}
-
-		if($headerTextColor){
-			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: $headerTextColor !important; }";
-		}
-		
-		if ($BgColor) {
-			$css .= "body.sfx-page-customizer-active { background: {$BgColor} !important; }";
-		}
-		if ($BgImage) {
-			$css .= "body.sfx-page-customizer-active { background: url('$BgImage'){$BgOptions} !important; }\n";
-		}
-
-		if($bodyLinkColor){
-			$css .= "a { color: $bodyLinkColor !important; }";
-		}
-		if($bodyTextColor){
-			$css .= "body, .secondary-navigation a, .widget-area .widget a, .onsale, #comments .comment-list .reply a { color: $bodyTextColor !important; }";
-		}
-		if($bodyHeadColor){
-			$css .= "h1, h2, h3, h4, h5, h6 { color: $bodyHeadColor !important; }";
+		if ( $bg['background-image'] ) {
+			$css .= "body.sfx-page-customizer-active { background: {$bg['background-color']} url('{$bg['background-image']}'){$BgOptions} !important; }\n";
 		}
 
 		return $css;
+	}
+
+	/**
+	 * Header styles.
+	 * 
+	 * @since   1.0.0
+	 * @param array $head Header settings
+	 * @return  string CSS for header
+	 */
+	public function header_styles( $head ) {
+		$css = '';
+
+		$css .= $this->hide_title(! empty( $head['hide-title']));
+
+		if( ! empty( $head['hide-header'] ) ){
+			remove_all_actions( 'storefront_header' );
+			$css .= "#masthead { display:none !important; }\n";
+		}
+		if( ! empty( $head['hide-primary-menu'] ) ){
+			remove_action( 'storefront_header', 'storefront_primary_navigation', 50 );
+		}
+		if( ! empty( $head['hide-secondary-menu'] ) ){
+			remove_action( 'storefront_header', 'storefront_secondary_navigation', 30 );
+		}
+		if( ! empty( $head['hide-shop-cart'] ) ){
+			remove_action( 'storefront_header', 'storefront_header_cart', 		60 );
+		}
+		if( ! empty( $head['hide-breadcrumbs'] ) ){
+			remove_action( 'storefront_content_top', 'woocommerce_breadcrumb', 					10 );
+			$this->body_classes[] = 'no-wc-breadcrumb';
+		}
+
+		if($head['header-background-color']){
+			$css .= "#masthead, .sub-menu , .site-header-cart .widget_shopping_cart { background: {$head['header-background-color']} !important; }";
+		}
+		if($head['header-background-image']){
+			$css .= "#masthead { background-image: url('{$head['header-background-image']}') !important; }\n";
+		}
+		if($head['header-link-color']){
+			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: {$head['header-link-color']} !important; }";
+		}
+		if($head['header-text-color']){
+			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: {$head['header-text-color']} !important; }";
+		}
+
+		return $css;
+	}
+
+	/**
+	 * Content styles.
+	 * 
+	 * @since   1.0.0
+	 * @param array $content Content settings
+	 * @return  string CSS for header
+	 */
+	public function content_styles( $content ) {
+
+		$css = '';
+		//Layout
+		remove_filter( 'body_class', 'storefront_layout_class' );
+		$this->body_classes[] = $content['layout'] . '-sidebar';
+		
+		if($content['body-link-color']){
+			$css .= "a { color: {$content['body-link-color']} !important; }";
+		}
+		if($content['body-text-color']){
+			$css .= "body, .secondary-navigation a, .widget-area .widget a, .onsale, #comments .comment-list .reply a { color: {$content['body-text-color']} !important; }";
+		}
+		if($content['body-head-color']){
+			$css .= "h1, h2, h3, h4, h5, h6 { color: {$content['body-head-color']} !important; }";
+		}
+
+		return $css;
+	}
+	
+	/**
+	 * Hides the title
+	 * 
+	 * @since   1.0.0
+	 * @param bool $hideTitle
+	 */
+	public function hide_title( $hideTitle ){
+
+		//Hiding the title for Shop and Products
+		if( function_exists('is_shop') && is_shop() && $hideTitle ){
+			$css .= '.page-title { display: none !important; }';
+		}elseif ( $hideTitle ){
+			//Fallback for Products
+			$css .= '.product_title { display: none !important; }';
+			//Solving negative margin for product rating
+			$css .= '.single-product div.product .woocommerce-product-rating{margin-top:0;}';
+		}
+
+		//Removing the title for post and pages
+		if($hideTitle){
+			remove_action( 'storefront_page', 'storefront_page_header',	10 );
+			remove_action( 'storefront_single_post', 'storefront_post_header', 10 );
+		}
 	}
 
 	/**
@@ -1030,10 +909,14 @@ final class SFX_Page_Customizer {
 	 * @since 1.0.0
 	 * @param array $args The field parameters.
 	 * @param string $output_format = ( post || termEdit )
-	 * @param array $tax_data - Taxonomy sfxpc data if rendering for taxonomy
+	 * @param array $current_data - Current data to put current values in the fields
 	 * @return string
 	 */
-	public function render_field ( $args, $output_format = 'post', $tax_data=null ) {
+	public function render_field ( $args, $output_format = 'post', $current_data ) {
+
+		// Construct the key.
+		$args['key'] = $this->get_field_key($args['section'], $args['id']);
+
 
 		//Setting blank css-class key if not set
 		if( !isset($args['css-class']) ) $args['css-class'] = '';
@@ -1044,9 +927,9 @@ final class SFX_Page_Customizer {
 		}
 
 		if( $output_format == 'termEdit' ){
-			$this->render_tax_field( $args, $tax_data );
+			$this->render_tax_field( $args, $current_data );
 		}else{
-			$this->render_post_meta_field( $args );
+			$this->render_post_meta_field( $args, $current_data );
 		}
 
 	}
@@ -1059,27 +942,23 @@ final class SFX_Page_Customizer {
 	 */
 	protected function render_tax_field( $args, $tax_data ){
 
-		// Construct the key.
-		$key = $this->get_field_key($args['section'], $args['id']);
-
 		//Prefix to HTML
 		$html_prefix = ''
 		. '<tr class="form-field sfxpc-field '  . $args['id'] . ' ' . $args['css-class'] . '">'
-		. '<th scope="row"><label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label></th>'
+		. '<th scope="row"><label class="label" for="' . esc_attr($args['key']) . '">' . esc_html($args['label']) . '</label></th>'
 		. '<td>';
 
+		$current_val = $args['default'];
 		//Getting current value
 		if( isset( $tax_data[ $args['section'] ][ $args['id'] ] ) ){
 			$current_val = $tax_data[$args['section']][$args['id']];
-		}else{
-			$current_val = $args['default'];
 		}
 
 		//Suffix to field
 		$html_suffix = ''
 			. '</td>'
 			. '</tr>';
-		
+
 		//Output Field
 		$this->output_rendered_field($html_prefix, $html_suffix, $args, $current_val);
 
@@ -1090,18 +969,18 @@ final class SFX_Page_Customizer {
 	 * 
 	 * @param array $args Argument for field
 	 */
-	protected function render_post_meta_field( $args ){
-
-		// Construct the key.
-		$key = $this->get_field_key($args['section'], $args['id']);
+	protected function render_post_meta_field( $args, $post_meta ){
 
 		$html_prefix = ''
 		. '<div class="field sfxpc-field '  . $args['id'] . ' ' . $args['css-class'] . '">'
-		. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>'
+		. '<label class="label" for="' . esc_attr($args['key']) . '">' . esc_html($args['label']) . '</label>'
 		. '<div class="control">';
-
+		
+		$current_val = $args['default'];
 		//Getting current value
-		$current_val = $this->get_value( $args['section'], $args['id'], $args['default'] );
+		if( isset( $post_meta[ $args['section'] ][ $args['id'] ] ) ){
+			$current_val = $post_meta[$args['section']][$args['id']];
+		}
 
 		//Suffix to field
 		$html_suffix = ''
@@ -1129,11 +1008,8 @@ final class SFX_Page_Customizer {
 			$method = 'render_field_text';
 		}
 
-		// Construct the key.
-		$key = $this->get_field_key($args['section'], $args['id']);
-
 		//Output the field
-		$html = $this->$method( $key, $current_val, $args );
+		$html = $this->$method( $args['key'], $current_val, $args );
 
 		// Output the description
 		if ( isset( $args['description'] ) ) {
