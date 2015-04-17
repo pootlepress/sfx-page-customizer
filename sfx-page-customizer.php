@@ -307,8 +307,8 @@ final class SFX_Page_Customizer {
 			add_filter( 'storefront_customizer_more', '__return_false' );
 			foreach ($this->supported_taxonomies as $tax){
 				add_action( "{$tax}_edit_form", array( $this, 'tax_custom_fields' ) );
-				add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
 			}
+			add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
 		}
 	}
 
@@ -355,8 +355,8 @@ final class SFX_Page_Customizer {
 			return;
 		}
 
-		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
-			$sfxPCValues = $_REQUEST[$this->token];
+		if (isset($_POST[$this->token]) && is_array($_POST[$this->token])) {
+			$sfxPCValues = $_POST[$this->token];
 
 			//Automating the saving of our post metas
 			$all_meta = $this->post_meta;
@@ -380,9 +380,9 @@ final class SFX_Page_Customizer {
 			return;
 		}
 
-		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
+		if (isset($_POST[$this->token]) && is_array($_POST[$this->token])) {
 			$setting_name = $this->token.'-cat'.$ID;
-			$sfxPCValues = $_REQUEST[$this->token];
+			$sfxPCValues = $_POST[$this->token];
 			update_option($setting_name, $sfxPCValues);
 		}
 	}
@@ -608,7 +608,7 @@ final class SFX_Page_Customizer {
 		global $pagenow;
 		$tax_sfxpc_data = null;
 
-		if(isset($_REQUEST['action'])){
+		if(isset($_POST['action'])){
 			$output_format = 'termEdit';
 			$setting_name = $this->token. '-cat' . $term->term_id;
 			$tax_sfxpc_data = get_option($setting_name);
@@ -991,7 +991,7 @@ final class SFX_Page_Customizer {
 		}elseif(
 		  (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php'))
 		  OR
-		  (isset($_REQUEST['post-type']) && strtolower($_REQUEST['post_type']) != 'page')
+		  (isset($_POST['post-type']) && strtolower($_POST['post_type']) != 'page')
 		) {
 			return;
 		}
@@ -1081,7 +1081,8 @@ final class SFX_Page_Customizer {
 				. '<td>';
 
 				//Getting current value
-				if($tax_data[$args['section']][$args['id']]){
+				
+				if( isset( $tax_data[ $args['section'] ][ $args['id'] ] ) ){
 					$current_val = $tax_data[$args['section']][$args['id']];
 				}else{
 					$current_val = $args['default'];
