@@ -290,7 +290,6 @@ final class SFX_Page_Customizer {
 			add_action('admin_print_scripts', array($this, 'admin_scripts'));
 			add_action( 'wp_enqueue_scripts', array( $this, 'sfxpc_styles' ), 999 );
 			add_action( 'admin_print_scripts', array( $this, 'sfxpc_script' ), 999 );
-			add_action( 'customize_register', array( $this, 'sfxpc_customize_register' ) );
 			add_action( 'customize_preview_init', array( $this, 'sfxpc_customize_preview_js' ) );
 			add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
 			add_filter( 'admin_body_class', array( $this, 'sfxpc_admin_body_class') );
@@ -313,8 +312,6 @@ final class SFX_Page_Customizer {
 	 * @return  void
 	 */
 	public function sfxpc_customizer_notice() {
-		$notices = get_option( 'sfxpc_activation_notice' );
-
 		if ( $notices = get_option( 'sfxpc_activation_notice' ) ) {
 
 			foreach ( $notices as $notice ) {
@@ -324,12 +321,6 @@ final class SFX_Page_Customizer {
 			delete_option( 'sfxpc_activation_notice' );
 		}
 	}
-
-	/**
-	 * Customizer Controls and settings
-	 * @param WP_Customize_Manager $wp_customize Theme Customizer object.
-	 */
-	public function sfxpc_customize_register( $wp_customize ) {/*Placeholder for future*/}
 
 	public function register_meta_box() {
 		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this post', array($this, 'custom_fields'), 'post' );
@@ -602,8 +593,10 @@ final class SFX_Page_Customizer {
 		global $pagenow;
 		$tax_sfxpc_data = null;
 
+		$output_format = '';
+
 		if(isset($_GET['action'])){
-			$output_format = 'termEdit';
+			$output_format = null;
 			$setting_name = $this->token. '-cat' . $term->term_id;
 			$tax_sfxpc_data = get_option($setting_name);
 
@@ -642,9 +635,9 @@ final class SFX_Page_Customizer {
 	 * @param string $post_id
 	 * @return string
 	 */
-	protected function get_value($section, $id, $default = null, $post_id=null) {
+	protected function get_value($section, $id, $default = null, $post_id = null) {
 		//Getting post id if not set
-		if( !$post_id ){ global $post; $post_id = $post->ID; }
+		if( null === $post_id ){ global $post; $post_id = $post->ID; }
 
 		$metaKey = $this->get_meta_key($section, $id);
 
@@ -691,7 +684,7 @@ final class SFX_Page_Customizer {
 		}elseif(is_home()){
 			$current_post = get_option( 'page_for_posts' );
 		}else{
-			$current_post = false;
+			$current_post = null;
 		}
 		
 		$hideHeader = $this->get_value('header', 'hide-header', null, $current_post);
@@ -767,7 +760,7 @@ final class SFX_Page_Customizer {
 		}elseif(is_home()){
 			$current_post = get_option( 'page_for_posts' );
 		}else{
-			$current_post = false;
+			$current_post = null;
 		}
 
 		$layout = $this->get_value('content', 'layout', 'right', $current_post);
@@ -1062,7 +1055,7 @@ final class SFX_Page_Customizer {
 	 * Rendrs the taxonomy Field
 	 * 
 	 * @param array $args Argument for field
-	 * @param array $tax_data Taxonomy data
+	 * @param array|null $tax_data Taxonomy data
 	 */
 	protected function render_tax_field( $args, $tax_data ){
 
@@ -1140,7 +1133,7 @@ final class SFX_Page_Customizer {
 		$key = $this->get_field_key($args['section'], $args['id']);
 
 		//Output the field
-		$html = $this->$method( $key, $args, $current_val );
+		$html = $this->$method( $key, $current_val, $args );
 
 		// Output the description
 		if ( isset( $args['description'] ) ) {
@@ -1160,7 +1153,7 @@ final class SFX_Page_Customizer {
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_text ( $key, $args, $current_val=null ) {
+	protected function render_field_text ( $key, $current_val ) {
 		$html = '<input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" size="40" type="text" value="' . esc_attr( $current_val ) . '" />' . "\n";
 		return $html;
 	}
@@ -1173,7 +1166,7 @@ final class SFX_Page_Customizer {
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_radio ( $key, $args, $current_val=null ) {
+	protected function render_field_radio ( $key, $current_val, $args ) {
 		$html = '';
 		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
 			foreach ( $args['options'] as $k => $v ) {
@@ -1191,7 +1184,7 @@ final class SFX_Page_Customizer {
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_textarea ( $key, $args, $current_val=null ) {
+	protected function render_field_textarea ( $key, $current_val ) {
 		$html = '<textarea id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" cols="42" rows="5">' . $current_val . '</textarea>' . "\n";
 		return $html;
 	}
@@ -1204,7 +1197,7 @@ final class SFX_Page_Customizer {
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_checkbox ( $key, $args, $current_val=null ) {
+	protected function render_field_checkbox ( $key, $current_val ) {
 		$html = '<input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="checkbox" value="true" ' . checked( $current_val, 'true', false ) . ' />';
 		return $html;
 	}
@@ -1217,7 +1210,7 @@ final class SFX_Page_Customizer {
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_select ( $key, $args, $current_val=null ) {
+	protected function render_field_select ( $key, $current_val, $args ) {
 		$html = '';
 		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
 			$html .= '<select id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '">' . "\n";
@@ -1237,7 +1230,7 @@ final class SFX_Page_Customizer {
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_color( $key, $args, $current_val=null ) {
+	protected function render_field_color( $key, $current_val ) {
 		$html = '<input class="color-picker-hex" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="text" value="' . esc_attr( $current_val ) . '" />';
 		return $html;
 	}
@@ -1250,7 +1243,7 @@ final class SFX_Page_Customizer {
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected  function render_field_image( $key, $args, $current_val=null ) {
+	protected  function render_field_image( $key, $current_val ) {
 		$html = '<input class="image-upload-path" type="text" id="' . esc_attr($key) . '" style="width: 200px; max-width: 100%;" name="' . esc_attr($key) . '" value="' . esc_attr( $current_val ) . '" /><button class="button upload-button">Upload</button>';
 		return $html;
 	}
