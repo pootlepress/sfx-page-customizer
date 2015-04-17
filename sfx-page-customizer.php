@@ -295,8 +295,6 @@ final class SFX_Page_Customizer {
 		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
 			//Supported post types and taxonomies
 			$this->get_supported_taxonomies();
-			//Meta fields
-			$this->get_meta_fields();
 			//Renderer
 			$this->admin = new SFXPC_Admin( $this->token, $this->version, $this->plugin_url );
 			//Renderer @TODO shift this to Admin Class

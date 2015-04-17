@@ -51,17 +51,21 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 
 
 		//Setting blank css-class key if not set
-		if( !isset($args['css-class']) ) $args['css-class'] = '';
+		if( ! isset($args['css-class']) ) $args['css-class'] = '';
+		
+		$args['css-class'] .= ' sfxpc-field '  . $args['id'];
 
 		// Make sure we have some kind of default, if the key isn't set.
 		if ( ! isset( $args['default'] ) ) {
 			$args['default'] = '';
 		}
 
+		$current_val = $this->get_current_value($args, $current_data);
+
 		if( $output_format == 'termEdit' ){
-			$this->render_tax_field( $args, $current_data );
+			$this->render_tax_field( $args, $current_val );
 		}else{
-			$this->render_post_meta_field( $args, $current_data );
+			$this->render_post_meta_field( $args, $current_val );
 		}
 
 	}
@@ -81,24 +85,14 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * Rendrs the taxonomy Field
 	 * 
 	 * @param array $args Argument for field
-	 * @param array|null $tax_data Taxonomy data
+	 * @param string $current_val Current value of the field
 	 */
-	protected function render_tax_field( $args, $tax_data ){
+	protected function render_tax_field( $args, $current_val ){
 
-		//Prefix to HTML
-		$html_prefix = ''
-		. '<tr class="form-field sfxpc-field '  . $args['id'] . ' ' . $args['css-class'] . '">'
-		. '<th scope="row"><label class="label" for="' . esc_attr($args['key']) . '">' . esc_html($args['label']) . '</label></th>'
-		. '<td>';
+		$html_prefix = '<tr class="form-field ' . $args['css-class'] . '"><th scope="row">%lbl%</th><td>';
 
-		$current_val = $this->get_current_value($args, $tax_data);
+		$html_suffix = '</td></tr>';
 
-		//Suffix to field
-		$html_suffix = ''
-			. '</td>'
-			. '</tr>';
-
-		//Output Field
 		$this->output_rendered_field($html_prefix, $html_suffix, $args, $current_val);
 
 	}
@@ -107,22 +101,14 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * Renders the post meta Field
 	 * 
 	 * @param array $args Argument for field
+	 * @param string $current_val Current value of the field
 	 */
-	protected function render_post_meta_field( $args, $post_meta ){
+	protected function render_post_meta_field( $args, $current_val ){
 
-		$html_prefix = ''
-		. '<div class="field sfxpc-field '  . $args['id'] . ' ' . $args['css-class'] . '">'
-		. '<label class="label" for="' . esc_attr($args['key']) . '">' . esc_html($args['label']) . '</label>'
-		. '<div class="control">';
-		
-		$current_val = $this->get_current_value($args, $post_meta);
+		$html_prefix = '<div class="field ' . $args['css-class'] . '">%lbl%<div class="control">';
 
-		//Suffix to field
-		$html_suffix = ''
-			. '</div>'
-			. '</div>';
+		$html_suffix = '</div></div>';
 
-		//Output Field
 		$this->output_rendered_field($html_prefix, $html_suffix, $args, $current_val);
 
 	}
@@ -152,7 +138,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 		}
 
 		//Ouput $html with suffix and prefix
-		echo $html_prefix . $html . $html_suffix;
+		echo str_replace('%lbl%', '<label class="label" for="' . esc_attr($args['key']) . '">' . esc_html($args['label']) . '</label>', $html_prefix) . $html . $html_suffix;
 
 	}
 
