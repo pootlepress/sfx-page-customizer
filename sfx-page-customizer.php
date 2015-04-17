@@ -344,6 +344,10 @@ final class SFX_Page_Customizer {
 	}
 
 	public function save_post($postID) {
+		if ( ! isset( $_POST['sfx-pc-nonce'] ) || ! wp_verify_nonce( $_POST['sfx-pc-nonce'], 'sfx-pc-post-meta' ) ){
+			return;
+		}
+
 		$post = get_post($postID);
 		 
 		//check if post type is post,page or product
@@ -371,6 +375,11 @@ final class SFX_Page_Customizer {
 	}
 
 	public function save_term_fields($ID) {
+
+		if ( ! isset( $_POST['sfx-pc-nonce'] ) || ! wp_verify_nonce( $_POST['sfx-pc-nonce'], 'sfx-pc-tax-meta' ) ){
+			return;
+		}
+
 		if (isset($_REQUEST[$this->token]) && is_array($_REQUEST[$this->token])) {
 			$setting_name = $this->token.'-cat'.$ID;
 			$sfxPCValues = $_REQUEST[$this->token];
@@ -568,6 +577,9 @@ final class SFX_Page_Customizer {
 		$class = ' sfxpc-metabox sfxpc-tabs-wrapper ';
 		echo "<div class='{$class}'>";
 
+		//WP Nonce
+		wp_nonce_field( 'sfx-pc-post-meta', 'sfx-pc-nonce' );
+
 		$field_structure = array();
 		foreach ($fields as $key => $field) {
 			$field_structure[$field['section']][] = $field;
@@ -619,6 +631,10 @@ final class SFX_Page_Customizer {
 		echo '<h2>'
 		  . 'Customize Storefront options for this ' . $taxonomy->labels->singular_name . ' archive'
 		. '</h2>';
+
+		//Nonce
+		wp_nonce_field( 'sfx-pc-tax-meta', 'sfx-pc-nonce' );
+
 		echo '<table class="form-table">';
 		foreach ($fields as $key => $field) {
 			$this->render_field($field, $output_format, $tax_sfxpc_data);
@@ -635,7 +651,7 @@ final class SFX_Page_Customizer {
 	 * @param string $post_id
 	 * @return string
 	 */
-	protected function get_value($section, $id, $default = null, $post_id=false) {
+	protected function get_value($section, $id, $default = null, $post_id=null) {
 		//Getting post id if not set
 		if( !$post_id ){ global $post; $post_id = $post->ID; }
 
@@ -687,13 +703,13 @@ final class SFX_Page_Customizer {
 			$current_post = false;
 		}
 		
-		$hideHeader = $this->get_value('header', 'hide-header', false, $current_post);
+		$hideHeader = $this->get_value('header', 'hide-header', null, $current_post);
 		$hidePrimaryNav = $this->get_value('header', 'hide-primary-menu', null, $current_post);
 		$hideSecondaryNav = $this->get_value('header', 'hide-secondary-menu', null, $current_post);
 		$hideHeaderCart = $this->get_value('header', 'hide-shop-cart', null, $current_post);
 		$hideBreadcrumbs = $this->get_value('header', 'hide-breadcrumbs', null, $current_post);
-		$hideTitle = $this->get_value('header', 'hide-title', '', $current_post);
-		$hideFooter = $this->get_value('footer', 'hide-footer', false, $current_post);
+		$hideTitle = $this->get_value('header', 'hide-title', null, $current_post);
+		$hideFooter = $this->get_value('footer', 'hide-footer', null, $current_post);
 
 		if($hideHeader){
 			remove_all_actions( 'storefront_header' );
@@ -764,7 +780,7 @@ final class SFX_Page_Customizer {
 		}
 
 		$layout = $this->get_value('content', 'layout', 'right', $current_post);
-		$hideHeader = $this->get_value('header', 'hide-header', false, $current_post);
+		$hideHeader = $this->get_value('header', 'hide-header', null, $current_post);
 		$hideTitle = $this->get_value('header', 'hide-title', '', $current_post);
 		$headerBgColor = $this->get_value('header', 'header-background-color', null, $current_post);
 		$headerBgImage = $this->get_value('header', 'header-background-image', null, $current_post);
@@ -778,7 +794,7 @@ final class SFX_Page_Customizer {
 		$bodyLinkColor = $this->get_value('content', 'body-link-color', null, $current_post);
 		$bodyTextColor = $this->get_value('content', 'body-text-color', null, $current_post);
 		$bodyHeadColor = $this->get_value('content', 'body-head-color', null, $current_post);
-		$hideFooter = $this->get_value('footer', 'hide-footer', false, $current_post);
+		$hideFooter = $this->get_value('footer', 'hide-footer', null, $current_post);
 
 		//Hiding the title for Shop Page, Post, Products and Page
 		if($is_shop && $hideTitle){
@@ -972,7 +988,6 @@ final class SFX_Page_Customizer {
 		if($pagenow=='edit-tags.php'){
 			//Though everything is commented this if section is still important coz it prevents returning the function
 			wp_enqueue_media();
-			//wp_enqueue_script('sfxpc-tax-script', trailingslashit($this->plugin_url) . 'assets/js/admin/taxonomy.js', array('wp-color-picker', 'thickbox', 'jquery'));
 		}elseif(
 		  (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php'))
 		  OR
