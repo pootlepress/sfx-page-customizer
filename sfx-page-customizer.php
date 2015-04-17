@@ -152,12 +152,6 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 */
 	public $post_meta = array();
-	
-	/**
-	 * Controls not to show in taxonomies
-	 * @var array
-	 */
-	public $not_in_tax = array();
 
 	/**
 	 * Array of classes to be put in body
@@ -608,7 +602,7 @@ final class SFX_Page_Customizer {
 		global $pagenow;
 		$tax_sfxpc_data = null;
 
-		if(isset($_POST['action'])){
+		if(isset($_GET['action'])){
 			$output_format = 'termEdit';
 			$setting_name = $this->token. '-cat' . $term->term_id;
 			$tax_sfxpc_data = get_option($setting_name);
@@ -621,9 +615,6 @@ final class SFX_Page_Customizer {
 			if(!isset($tax_sfxpc_data['header']['hide-title']))$tax_sfxpc_data['header']['hide-title'] = false;
 			if(!isset($tax_sfxpc_data['footer']['hide-footer']))$tax_sfxpc_data['footer']['hide-footer'] = false;
 
-
-		}else{
-			$output_format = 'termAdd';
 		}
 		
 		$fields = $this->post_meta;
@@ -1045,107 +1036,120 @@ final class SFX_Page_Customizer {
 	 * @access public
 	 * @since 1.0.0
 	 * @param array $args The field parameters.
-	 * @param string $output_format = ( post || termEdit || termAdd )
+	 * @param string $output_format = ( post || termEdit )
 	 * @param array $tax_data - Taxonomy sfxpc data if rendering for taxonomy
 	 * @return string
 	 */
 	public function render_field ( $args, $output_format = 'post', $tax_data=null ) {
-		$html = '';
-		$css_class = '';
-		if( isset($args['css-class']) ) $css_class .= $args['css-class'];
 
-		if ( ! in_array( $args['type'], array( 'text', 'checkbox', 'radio', 'textarea', 'select', 'color', 'image' ) ) ) return ''; // Supported field type sanity check.
+		//Setting blank css-class key if not set
+		if( !isset($args['css-class']) ) $args['css-class'] = '';
 
 		// Make sure we have some kind of default, if the key isn't set.
 		if ( ! isset( $args['default'] ) ) {
 			$args['default'] = '';
 		}
 
-		$method = 'render_field_' . $args['type'];
+		if( $output_format == 'termEdit' ){
+			$this->render_tax_field( $args, $tax_data );
+		}else{
+			$this->render_post_meta_field( $args );
+		}
 
+	}
+
+	/**
+	 * Rendrs the taxonomy Field
+	 * 
+	 * @param array $args Argument for field
+	 * @param array $tax_data Taxonomy data
+	 */
+	protected function render_tax_field( $args, $tax_data ){
+
+		// Construct the key.
+		$key = $this->get_field_key($args['section'], $args['id']);
+
+		//Prefix to HTML
+		$html_prefix = ''
+		. '<tr class="form-field sfxpc-field '  . $args['id'] . ' ' . $args['css-class'] . '">'
+		. '<th scope="row"><label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label></th>'
+		. '<td>';
+
+		//Getting current value
+		if( isset( $tax_data[ $args['section'] ][ $args['id'] ] ) ){
+			$current_val = $tax_data[$args['section']][$args['id']];
+		}else{
+			$current_val = $args['default'];
+		}
+
+		//Suffix to field
+		$html_suffix = ''
+			. '</td>'
+			. '</tr>';
+		
+		//Output Field
+		$this->output_rendered_field($html_prefix, $html_suffix, $args, $current_val);
+
+	}
+
+	/**
+	 * Renders the post meta Field
+	 * 
+	 * @param array $args Argument for field
+	 */
+	protected function render_post_meta_field( $args ){
+
+		// Construct the key.
+		$key = $this->get_field_key($args['section'], $args['id']);
+
+		$html_prefix = ''
+		. '<div class="field sfxpc-field '  . $args['id'] . ' ' . $args['css-class'] . '">'
+		. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>'
+		. '<div class="control">';
+
+		//Getting current value
+		$current_val = $this->get_value( $args['section'], $args['id'], $args['default'] );
+
+		//Suffix to field
+		$html_suffix = ''
+			. '</div>'
+			. '</div>';
+
+		//Output Field
+		$this->output_rendered_field($html_prefix, $html_suffix, $args, $current_val);
+
+	}
+
+	/**
+	 * Outputs the field after rendering with HTML for the context
+	 * 
+	 * @param string $html_prefix
+	 * @param string $html_suffix
+	 * @param array $args Argument for field
+	 * @param string $current_val Current value of the field
+	 */
+	protected function output_rendered_field( $html_prefix, $html_suffix, $args, $current_val ){
+
+		//Getting the method for field
+		$method = 'render_field_' . $args['type'];
 		if ( ! method_exists( $this, $method ) ) {
 			$method = 'render_field_text';
 		}
 
 		// Construct the key.
 		$key = $this->get_field_key($args['section'], $args['id']);
-		
-		switch($output_format){
-			case 'termEdit':
-				if(in_array($args['id'], $this->not_in_tax))return;
-
-				//Prefix to field
-				$html_prefix = ''
-				. '<tr class="form-field sfxpc-field '  . $args['id'] . ' ' . $css_class . '">'
-				. '<th scope="row"><label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label></th>'
-				. '<td>';
-
-				//Getting current value
-				
-				if( isset( $tax_data[ $args['section'] ][ $args['id'] ] ) ){
-					$current_val = $tax_data[$args['section']][$args['id']];
-				}else{
-					$current_val = $args['default'];
-				}
-
-				//Suffix to field
-				$html_suffix = ''
-					. '</td>'
-					. '</tr>';
-
-				break;
-			case 'termAdd':
-				if($args['id'] == 'hide-title')return;
-
-				//Prefix to field
-				$html_prefix = ''
-				. '<div class="form-field sfxpc-field '  . $args['id'] . ' ' . $css_class . '">'
-				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>';
-
-				//Getting current value
-				$current_val = '';
-
-				//Suffix to field
-				$html_suffix = ''
-					. '</div>';
-				
-				break;
-			default:
-				//Prefix to field
-				$html_prefix = ''
-				. '<div class="field sfxpc-field '  . $args['id'] . ' ' . $css_class . '">'
-				. '<label class="label" for="' . esc_attr($key) . '">' . esc_html($args['label']) . '</label>'
-				. '<div class="control">';
-
-				//Getting current value
-				$current_val = $this->get_value( $args['section'], $args['id'], $args['default'] );
-
-				//Suffix to field
-				$html_suffix = ''
-					. '</div>'
-					. '</div>';
-		}
-
-		//Prefix
-		$html .= $html_prefix;
 
 		//Output the field
-		$method_output = $this->$method( $key, $args, $current_val );
-		$html .= $method_output;
+		$html = $this->$method( $key, $args, $current_val );
 
 		// Output the description
 		if ( isset( $args['description'] ) ) {
-			$description = '<p class="description">' . wp_kses_post( $args['description'] ) . '</p>' . "\n";
-			if ( in_array( $args['type'], (array)apply_filters( 'wf_newline_description_fields', array( 'textarea', 'select' ) ) ) ) {
-					$description = wpautop( $description );
-				}
-			$html .= $description;
+			$html .= '<p class="description">' . wp_kses_post( $args['description'] ) . '</p>' . "\n";
 		}
 
-		//Suffix
-		$html .= $html_suffix;
-		
-		echo $html;
+		//Ouput $html with suffix and prefix
+		echo $html_prefix . $html . $html_suffix;
+
 	}
 
 	/**
