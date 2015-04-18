@@ -63,7 +63,6 @@ class SFXPC_Admin extends SFXPC_Abstract{
 
 		//Renderer
 		$this->renderer = new SFXPC_Render_Fields( $this->token, $this->version );
-
 		//Supported Post Types and Taxonomies
 		$this->get_supported_post_types();
 		$this->get_supported_taxonomies();

@@ -46,33 +46,4 @@ abstract class SFXPC_Abstract {
 			$this->init(func_get_args());
 		}
 	}
-	
-	/**
-	 * Initiating function for plugging in fucntionality
-	 * @access  public
-	 * @since   1.0.0
-	 */
-	public function init( $args ) {
-		//For child classes
-	}
-
-
-	/**
-	 * Cloning is forbidden.
-	 *
-	 * @since 1.0.0
-	 */
-	public function __clone() {
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), '1.0.0' );
-	}
-
-	/**
-	 * Unserializing instances of this class is forbidden.
-	 *
-	 * @since 1.0.0
-	 */
-	public function __wakeup() {
-		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), '1.0.0' );
-	}
-
 }

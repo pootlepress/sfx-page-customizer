@@ -137,12 +137,28 @@ final class SFX_Page_Customizer {
 	public $settings;
 
  	/**
+	 * The admin fields rendering object.
+	 * @var     object
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $renderer;
+
+ 	/**
 	 * The admin class object.
 	 * @var     object
 	 * @access  public
 	 * @since   1.0.0
 	 */
 	public $admin;
+
+	/**
+	 * The taxonomies we support.
+	 * @var     array
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $supported_taxonomies = array();
 
 	/**
 	 * All the post metas to populate.
@@ -277,10 +293,14 @@ final class SFX_Page_Customizer {
 	public function sfxpc_setup() {
 		$theme = wp_get_theme();
 		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
+			//Supported post types and taxonomies
+			$this->get_supported_taxonomies();
 			//Renderer
 			$this->admin = new SFXPC_Admin( $this->token, $this->version, $this->plugin_url );
+			//Renderer @TODO shift this to Admin Class
+			$this->renderer = new SFXPC_Render_Fields( $this->token, $this->version );
 			//settings frontend
-			$this->settings = new SFXPC_Settings_Output( $this->token, $this->version, $this->admin->supported_taxonomies );
+			$this->settings = new SFXPC_Settings_Output( $this->token, $this->version );
 			//Admin Hooks
 			$this->sfxpc_admin_hooks();
 			//Hooks
@@ -323,7 +343,7 @@ final class SFX_Page_Customizer {
 		add_action( 'admin_notices', array( $this->admin, 'sfxpc_customizer_notice' ) );
 		// Hide the 'More' section in the customizer
 		add_filter( 'storefront_customizer_more', '__return_false' );
-		foreach ( $this->admin->supported_taxonomies as $tax ){
+		foreach ($this->admin->supported_taxonomies as $tax){
 			add_action( "{$tax}_edit_form", array( $this->admin, 'tax_custom_fields' ) );
 		}
 //		add_action( 'edit_terms', array( $this->admin, 'save_term_fields' ) );
@@ -343,6 +363,55 @@ final class SFX_Page_Customizer {
 		}
 	}
 
+	private function get_supported_taxonomies(){
+		$this->supported_taxonomies = array(
+		  'category',
+		  'post_tag',
+		  'product_cat',
+		  'product_tag',
+		);
+	}
+
+	public function get_post_settings(){
+
+		$is_shop=false;
+
+		if(function_exists('is_shop') && is_shop()){
+			$is_shop = true;
+		}
+
+		global $post;
+
+		//Meta values for the page
+		if($is_shop){
+			$current_post = get_option( 'woocommerce_shop_page_id' );
+		}elseif(is_home()){
+			$current_post = get_option( 'page_for_posts' );
+		}else{
+			$current_post = $post->ID;
+		}
+
+		return get_post_meta( $current_post , $this->token , true);
+
+	}
+
+	/**
+	 * Taxonomy Style
+	 * 
+	 * @TODO Get rid of it
+	 * @return void|null
+	 */
+	public function get_tax_settings(){
+
+		//Get term object
+		$term = get_queried_object();
+		//Get the setting name
+		$setting_name = $this->token. '-cat' . $term->term_id;
+		//Return the settings (option)
+		return get_option($setting_name);
+
+	}
+
 	/**
 	 * Enqueue CSS and custom styles.
 	 * @since   1.0.0
@@ -351,7 +420,16 @@ final class SFX_Page_Customizer {
 	public function sfxpc_styles() {
 		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
 
-		$css = $this->settings->css();
+		//Check if it is a supported taxonomy term archive
+		if(is_tax($this->supported_taxonomies) || is_tag() || is_category()){
+			$settings = $this->get_tax_settings();
+		}else{
+			if( ! $settings = $this->get_post_settings() ){	
+				return;
+			}
+		}
+ 
+		$css = $this->settings->css( $settings );
 
 		wp_add_inline_style( 'sfxpc-styles', $css );
 	}
