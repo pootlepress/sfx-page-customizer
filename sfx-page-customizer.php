@@ -17,7 +17,7 @@
  * @author PootlePress
  */
 
-if ( ! defined( 'ABSPATH' ) ){ exit; }// Exit if accessed directly
+if ( ! defined( 'ABSPATH' ) ) { exit; }// Exit if accessed directly
 
 // Sold On Woo - Start
 /**
@@ -54,7 +54,7 @@ require_once(dirname(__FILE__) . '/includes/class-pootlepress-updater.php');
 /**
  * Instantiates Pootlepress_Updater
  */
-function sfxpc_pp_updater(){
+function sfxpc_pp_updater() {
 	if (!function_exists('get_plugin_data')) {
 		include(ABSPATH . 'wp-admin/includes/plugin.php');
 	}
@@ -189,7 +189,7 @@ final class SFX_Page_Customizer {
 	 * @return Main SFX_Page_Customizer instance
 	 */
 	public static function instance() {
-		if ( is_null( self::$_instance ) ){
+		if ( is_null( self::$_instance ) ) {
 			self::$_instance = new self();
 		}
 		return self::$_instance;
@@ -295,7 +295,7 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	public function sfxpc_hooks(){
+	public function sfxpc_hooks() {
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'sfxpc_styles' ), 999 );
 		add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
@@ -309,21 +309,21 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	public function sfxpc_admin_hooks(){
+	public function sfxpc_admin_hooks() {
 
 		add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
 		
 		$admin = $this->admin;
 		
 		add_action('admin_init', array($admin, 'register_meta_box'));
-		add_action('save_post', array($this->admin, 'save_post'));
-		add_action('admin_print_scripts', array($this->admin, 'admin_scripts'));
+		add_action('save_post', array( $this->admin, 'save_post'));
+		add_action('admin_print_scripts', array( $this->admin, 'admin_scripts'));
 		add_action( 'customize_preview_init', array( $this->admin, 'sfxpc_customize_preview_js' ) );
 		add_filter( 'admin_body_class', array( $this->admin, 'sfxpc_admin_body_class') );
 		add_action( 'admin_notices', array( $this->admin, 'sfxpc_customizer_notice' ) );
 		// Hide the 'More' section in the customizer
 		add_filter( 'storefront_customizer_more', '__return_false' );
-		foreach ( $this->admin->supported_taxonomies as $tax ){
+		foreach ( $this->admin->supported_taxonomies as $tax ) {
 			add_action( "{$tax}_edit_form", array( $this->admin, 'tax_custom_fields' ) );
 		}
 //		add_action( 'edit_terms', array( $this->admin, 'save_term_fields' ) );
@@ -332,11 +332,11 @@ final class SFX_Page_Customizer {
 
 	public function save_term_fields($ID) {
 
-		if ( ! isset( $_POST['sfx-pc-nonce'] ) || ! wp_verify_nonce( $_POST['sfx-pc-nonce'], 'sfx-pc-tax-meta' ) ){
+		if ( ! isset( $_POST['sfx-pc-nonce'] ) || ! wp_verify_nonce( $_POST['sfx-pc-nonce'], 'sfx-pc-tax-meta' ) ) {
 			return;
 		}
 
-		if (isset($_POST[$this->token]) && is_array($_POST[$this->token])) {
+		if (isset($_POST[$this->token] ) && is_array($_POST[$this->token] )) {
 			$setting_name = $this->token.'-cat'.$ID;
 			$sfxPCValues = $_POST[$this->token];
 			update_option($setting_name, $sfxPCValues);

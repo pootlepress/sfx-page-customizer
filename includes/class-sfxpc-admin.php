@@ -50,13 +50,21 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	public $admin_fields = array();
 
 	/**
+	 * Holds instance of SFXPC_Render_Fields
+	 * @var     object SFXPC_Render_Fields
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $renderer;
+
+	/**
 	 * Called by Parent::__consruct
 	 * Initiates class variables
 	 * 
 	 * @access  public
 	 * @since   1.0.0
 	 */
-	public function init( $args ){
+	public function init( $args ) {
 
 		//Basic Setup
 		$this->plugin_url 		= $args[2];
@@ -71,15 +79,15 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		$this->get_admin_fields();
 	}
 
-	private function get_supported_post_types(){
+	private function get_supported_post_types() {
 		$this->supported_post_types = array(
 		  'post',
 		  'page',
-		  'product'
+		  'product',
 		);
 	}
 
-	private function get_supported_taxonomies(){
+	private function get_supported_taxonomies() {
 		$this->supported_taxonomies = array(
 		  'category',
 		  'post_tag',
@@ -95,9 +103,9 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	 * @since   1.0.0
 	 */
 	public function register_meta_box() {
-		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this post', array($this, 'custom_fields'), 'post' );
-		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this page', array($this, 'custom_fields'), 'page' );
-		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this product', array($this, 'custom_fields'), 'product' );
+		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this post', array( $this, 'custom_fields' ), 'post' );
+		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this page', array( $this, 'custom_fields' ), 'page' );
+		add_meta_box( 'sfx-pc-meta-box', 'Customize Storefront options for this product', array( $this, 'custom_fields' ), 'product' );
 	}
 
 	/**
@@ -122,31 +130,35 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	public function custom_fields( $post ) {
 		$fields = $this->admin_fields;
 		$class = ' sfxpc-metabox sfxpc-tabs-wrapper ';
-		$postMetaValues = get_post_meta( $post->ID , $this->token , true);
+		$postMetaValues = get_post_meta( $post->ID , $this->token , true );
+		
 		echo "<div class='{$class}'>";
 
 		//WP Nonce
 		wp_nonce_field( 'sfx-pc-post-meta', 'sfx-pc-nonce' );
 		
 		$field_structure = array();
-		foreach ($fields as $key => $field) {
-			$field_structure[$field['section']][] = $field;
+		foreach ( $fields as $key => $field ) {
+			$field_structure[ $field['section'] ][] = $field;
 		}
+
 		echo "<ul class='sfxpc-sections-nav nav-tab-wrapper'>";
-		  foreach( $field_structure as $sec => $fields ){
-			  $Sec = ucwords($sec);
+		foreach( $field_structure as $sec => $fields ) {
+			$Sec = ucwords( $sec );
+			
 			echo "<li> <a href='#sfxpc-section-{$sec}'> $Sec </a> </li>";
-		  }
-		echo "</ul>";
-		foreach( $field_structure as $sec => $fields ){
+		}
+
+		echo '</ul>';
+		foreach( $field_structure as $sec => $fields ) {
 			echo "<div class='sfxpc-section' id='sfxpc-section-{$sec}'>";
-			foreach ($fields as $fld){
-				$this->renderer->render_field($fld, 'post', $postMetaValues);
+			foreach ( $fields as $fld ) {
+				$this->renderer->render_field( $fld, 'post', $postMetaValues );
 			}
-			echo "</div>";
+			echo '</div>';
 		}
 		
-		echo "</div>";
+		echo '</div>';
 	}
 
 	/**
@@ -154,21 +166,21 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	 * 
 	 * @param object $term
 	 */
-	public function tax_custom_fields($term) {
+	public function tax_custom_fields( $term ) {
 
 		$tax_sfxpc_data = get_option( $this->token. '-cat' . $term->term_id );
 
 		$fields = $this->admin_fields;
 
-		$taxonomy = get_taxonomy($term->taxonomy);
+		$taxonomy = get_taxonomy( $term->taxonomy );
 		echo '<h2>Customize Storefront options for this ' . $taxonomy->labels->singular_name . ' archive</h2>';
 
 		//Nonce
 		wp_nonce_field( 'sfx-pc-tax-meta', 'sfx-pc-nonce' );
 
 		echo '<table class="form-table">';
-		foreach ($fields as $key => $field) {
-			$this->renderer->render_field($field, 'termEdit', $tax_sfxpc_data);
+		foreach ( $fields as $key => $field ) {
+			$this->renderer->render_field( $field, 'termEdit', $tax_sfxpc_data );
 		}
 		echo '</table>';
 	}
@@ -178,24 +190,24 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	 * @param object $postID
 	 * @return null|void
 	 */
-	public function save_post($postID) {
+	public function save_post( $postID ) {
 		//Checking Nonce
-		if ( ! isset( $_POST['sfx-pc-nonce'] ) || ! wp_verify_nonce( $_POST['sfx-pc-nonce'], 'sfx-pc-post-meta' ) ){
+		if ( ! isset( $_POST['sfx-pc-nonce'] ) || ! wp_verify_nonce( esc_attr($_POST['sfx-pc-nonce'] ), 'sfx-pc-post-meta' ) ) {
 			return;
 		}
 
-		$post = get_post($postID);
+		$post = get_post( $postID );
 		 
 		//check if post type is post,page or product
-		if ( !in_array($post->post_type, $this->supported_post_types) || !isset($_POST[$this->token]) ) {
+		if ( ! in_array( $post->post_type, $this->supported_post_types ) || ! isset( $_POST[ $this->token ] ) ) {
 			return;
 		}
 
 		//Caching postdata
-		$data = $_POST[$this->token];
+		$data = $_POST[ $this->token ];
 
-		if ( is_array($data)) {
-			update_post_meta($postID, $this->token, $data);
+		if ( is_array( $data ) ) {
+			update_post_meta( $postID, $this->token, $data );
 		}
 		
 	}
@@ -208,28 +220,28 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	public function admin_scripts() {
 		global $pagenow;
 
-		if($pagenow=='edit-tags.php'){
+		if( 'edit-tags.php' == $pagenow ) {
 			//Though everything is commented this if section is still important coz it prevents returning the function
 			wp_enqueue_media();
-		}elseif(
-		  (!isset($pagenow) || !($pagenow == 'post-new.php' || $pagenow == 'post.php'))
+		}elseif( 
+		  ( ! isset( $pagenow ) || ! ( 'post-new.php' == $pagenow || 'post.php' == $pagenow ) )
 		  OR
-		  (isset($_POST['post-type']) && strtolower($_POST['post_type']) != 'page')
+		  ( isset( $_POST['post-type'] ) && strtolower( $_POST['post_type'] ) != 'page' )
 		) {
 			return;
 		}
 
 		// only in post and page create and edit screen
 
-		wp_enqueue_script('jquery-ui-tabs');
-		wp_enqueue_script('wp-color-picker');
-		wp_enqueue_script('sfxpc-admin-script', trailingslashit($this->plugin_url) . 'assets/js/admin/admin.js', array('wp-color-picker', 'jquery', 'thickbox'));
+		wp_enqueue_script( 'jquery-ui-tabs');
+		wp_enqueue_script( 'wp-color-picker');
+		wp_enqueue_script( 'sfxpc-admin-script', trailingslashit( $this->plugin_url ) . 'assets/js/admin/admin.js', array( 'wp-color-picker', 'jquery', 'thickbox' ) );
 
 		wp_enqueue_style( 'jquery-ui-style', '//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css' );
-		wp_enqueue_style('wp-color-picker');
-		wp_enqueue_style('wp-mediaelement');
-		wp_enqueue_style('thickbox');
-		wp_enqueue_style('sfxpc-admin-style', trailingslashit($this->plugin_url) . 'assets/css/admin/admin.css');
+		wp_enqueue_style( 'wp-color-picker' );
+		wp_enqueue_style( 'wp-mediaelement' );
+		wp_enqueue_style( 'thickbox' );
+		wp_enqueue_style( 'sfxpc-admin-style', trailingslashit( $this->plugin_url ) . 'assets/css/admin/admin.css' );
 	}
 
 	/**
@@ -246,7 +258,7 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	 * @param string $classes
 	 * @return string
 	 */
-	public function sfxpc_admin_body_class( $classes ){
+	public function sfxpc_admin_body_class( $classes ) {
 		if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 			$classes .= ' woo-commerce-active ';
 		}
@@ -263,7 +275,7 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		if ( $notices = get_option( 'sfxpc_activation_notice' ) ) {
 
 			foreach ( $notices as $notice ) {
-				echo '<div class="updated">' . $notice . '</div>';
+				echo '<div class="updated">' . esc_html( $notice ) . '</div>';
 			}
 
 			delete_option( 'sfxpc_activation_notice' );

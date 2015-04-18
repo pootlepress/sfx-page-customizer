@@ -23,11 +23,11 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @param array $args Argument for field
 	 * @param array|null $settings Current settings array
 	 */
-	protected function _get_current_value( $args, $settings ){
+	protected function _get_current_value( $args, $settings ) {
 
 		$current_val = $args['default'];
 		//Getting current value
-		if( isset( $settings[ $args['section'] ][ $args['id'] ] ) ){
+		if( isset( $settings[ $args['section'] ][ $args['id'] ] ) ) {
 			$current_val = $settings[$args['section']][$args['id']];
 		}
 		
@@ -58,11 +58,11 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	public function render_field ( $args, $output_format, $current_data ) {
 
 		// Construct the key.
-		$args['key'] = $this->_get_field_key($args['section'], $args['id']);
+		$args['key'] = $this->_get_field_key($args['section'], $args['id'] );
 
 
 		//Setting blank css-class key if not set
-		if( ! isset($args['css-class']) ) $args['css-class'] = '';
+		if( ! isset($args['css-class'] ) ) $args['css-class'] = '';
 		
 		$args['css-class'] .= ' sfxpc-field '  . $args['id'];
 
@@ -84,7 +84,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @param string $output_format = ( post || termEdit )
 	 * @param string $current_val Current value of the field
 	 */
-	protected function _render_field_wrapper( $args, $output_format, $current_val ){
+	protected function _render_field_wrapper( $args, $output_format, $current_val ) {
 
 		//Control/Label wrap start
 		echo $output_format == 'termEdit' ?	
@@ -93,7 +93,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 		  '<div class="field ' . $args['css-class'] . '">';
 
 		//Label
-		echo '<label class="label" for="' . esc_attr($args['key']) . '">' . esc_html($args['label']) . '</label>';
+		echo '<label class="label" for="' . esc_attr($args['key'] ) . '">' . esc_html($args['label'] ) . '</label>';
 
 		//Field wrap start
 		echo $output_format == 'termEdit' ?	'</th><td>' : '<div class="control">';
@@ -115,7 +115,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @param array $args Argument for field
 	 * @param string $current_val Current value of the field
 	 */
-	protected function _output_rendered_field( $args, $current_val ){
+	protected function _output_rendered_field( $args, $current_val ) {
 
 		//Getting the method for field
 		$method = '_render_field_' . $args['type'];
