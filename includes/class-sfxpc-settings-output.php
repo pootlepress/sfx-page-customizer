@@ -37,11 +37,38 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 	 * 
 	 * @access  public
 	 * @since   1.0.0
+	 * @param array $args Args to Parent:__contruct
+	 * @return null|string Styles
 	 */
-	public function init( $args ){
+	public function init( $args = NULL ){
 
+		if( !empty( $args[2] ) ){
 		//Basic Setup
-		$this->supported_taxonomies 		= $args[2];
+		$this->supported_taxonomies = $args[2];
+		}
+
+	}
+
+	/**
+	 * Initiates styles for options
+	 * 
+	 * @access  public
+	 * @since   1.0.0
+	 * @param array $args Args to Parent:__contruct
+	 * @return null|string Styles
+	 */
+	public function styles_init( $args = NULL ){
+
+		//Check if it is a supported taxonomy term archive
+		if(is_tax( $this->supported_taxonomies ) || is_tag() || is_category()){
+			$settings = $this->get_tax_settings();
+		}else{
+			//If Its a post $settings woulb be TRUEish
+			$settings = $this->get_post_settings();
+		}
+			
+		return $settings ? $this->css( $settings ) : FALSE;
+
 	}
 
 	public function get_post_settings(){
@@ -63,12 +90,12 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 			$current_post = $post->ID;
 		}
 
-		return get_post_meta( $current_post , $this->token , true);
+		return get_post_meta( $current_post , $this->token , TRUE);
 
 	}
 
 	/**
-	 * Taxonomy Style
+	 * Gets Taxonomy Settings
 	 * 
 	 * @TODO Get rid of it
 	 * @return void|null
@@ -89,23 +116,12 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 	 * 
 	 * @access  public
 	 * @since   1.0.0
+	 * @param array $settings
 	 * @return string CSS
 	 */
-	public function css(){
+	public function css( $settings ){
 
-		//Check if it is a supported taxonomy term archive
-		if(is_tax( $this->supported_taxonomies ) || is_tag() || is_category()){
-			if( ! $settings = $this->get_tax_settings() ){	
-				return;
-			}
-		}else{
-			if( ! $settings = $this->get_post_settings() ){	
-				return;
-			}
-		}
- 
-
-		$css = ''
+		$css = '/* Sfx Page Customizer Post/Taxonomy CSS */'
 		//BG styles
 		. $this->background_styles( $settings['background'] )
 		//Header styles
@@ -127,7 +143,7 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 	 * Background styles.
 	 * 
 	 * @since   1.0.0
-	 * @param string|null $current_post
+	 * @param string|null $bg
 	 * @return  string CSS for header
 	 */
 	public function background_styles( $bg ) {

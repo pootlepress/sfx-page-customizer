@@ -351,7 +351,7 @@ final class SFX_Page_Customizer {
 	public function sfxpc_styles() {
 		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
 
-		$css = $this->settings->css();
+		$css = $this->settings->styles_init();
 
 		wp_add_inline_style( 'sfxpc-styles', $css );
 	}
