@@ -24,20 +24,95 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 	public $body_classes = array();
 
 	/**
-	 * 
-	 * @param array $settings
+	 * The taxonomies we support.
+	 * @var     array
 	 * @access  public
 	 * @since   1.0.0
 	 */
-	public function css($settings){
-		
-		$css = '';
+	public $supported_taxonomies = array();
+
+	/**
+	 * Called by Parent::__consruct
+	 * Initiates class variables
+	 * 
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public function init( $args ){
+
+		//Basic Setup
+		$this->supported_taxonomies 		= $args[2];
+	}
+
+	public function get_post_settings(){
+
+		$is_shop=false;
+
+		if(function_exists('is_shop') && is_shop()){
+			$is_shop = true;
+		}
+
+		global $post;
+
+		//Meta values for the page
+		if($is_shop){
+			$current_post = get_option( 'woocommerce_shop_page_id' );
+		}elseif(is_home()){
+			$current_post = get_option( 'page_for_posts' );
+		}else{
+			$current_post = $post->ID;
+		}
+
+		return get_post_meta( $current_post , $this->token , true);
+
+	}
+
+	/**
+	 * Taxonomy Style
+	 * 
+	 * @TODO Get rid of it
+	 * @return void|null
+	 */
+	public function get_tax_settings(){
+
+		//Get term object
+		$term = get_queried_object();
+		//Get the setting name
+		$setting_name = $this->token. '-cat' . $term->term_id;
+		//Return the settings (option)
+		return get_option($setting_name);
+
+	}
+
+	/**
+	 * Returns the css for options
+	 * 
+	 * @access  public
+	 * @since   1.0.0
+	 * @return string CSS
+	 */
+	public function css(){
+
+		//Check if it is a supported taxonomy term archive
+		if(is_tax( $this->supported_taxonomies ) || is_tag() || is_category()){
+			if( ! $settings = $this->get_tax_settings() ){	
+				return;
+			}
+		}else{
+			if( ! $settings = $this->get_post_settings() ){	
+				return;
+			}
+		}
+ 
+
+		$css = ''
 		//BG styles
-		$css .= $this->background_styles( $settings['background'] );
+		. $this->background_styles( $settings['background'] )
 		//Header styles
-		$css .= $this->header_styles( $settings['header'] );
+		. $this->header_styles( $settings['header'] )
 		//Content styles
-		$css .= $this->content_styles( $settings['content'] );
+		. $this->content_styles( $settings['content'] );
+
 		//Footer styles
 		if( ! empty( $settings['footer']['hide-footer'] ) ){
 			remove_all_actions('storefront_footer');

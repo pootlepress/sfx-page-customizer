@@ -21,9 +21,9 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * Rendrs the taxonomy Field
 	 * 
 	 * @param array $args Argument for field
-	 * @param array|null $tax_data Taxonomy data
+	 * @param array|null $settings Current settings array
 	 */
-	protected function get_current_value( $args, $settings ){
+	protected function _get_current_value( $args, $settings ){
 
 		$current_val = $args['default'];
 		//Getting current value
@@ -33,6 +33,17 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 		
 		return $current_val;
 
+	}
+
+	/**
+	 * Gets the key for the field
+	 * 
+	 * @param string $section
+	 * @param string $id
+	 * @return type
+	 */
+	private function _get_field_key($section, $id) {
+		return $this->token . '[' . $section . '][' . $id . ']';
 	}
 
 	/**
@@ -47,7 +58,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	public function render_field ( $args, $output_format, $current_data ) {
 
 		// Construct the key.
-		$args['key'] = $this->get_field_key($args['section'], $args['id']);
+		$args['key'] = $this->_get_field_key($args['section'], $args['id']);
 
 
 		//Setting blank css-class key if not set
@@ -60,56 +71,39 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 			$args['default'] = '';
 		}
 
-		$current_val = $this->get_current_value($args, $current_data);
+		$current_val = $this->_get_current_value($args, $current_data);
 
-		if( $output_format == 'termEdit' ){
-			$this->render_tax_field( $args, $current_val );
-		}else{
-			$this->render_post_meta_field( $args, $current_val );
-		}
+		$this->_render_field_wrapper( $args, $output_format, $current_val );
 
 	}
 
 	/**
-	 * Gets the key for the field
-	 * 
-	 * @param string $section
-	 * @param string $id
-	 * @return type
-	 */
-	private function get_field_key($section, $id) {
-		return $this->token . '[' . $section . '][' . $id . ']';
-	}
-
-	/**
-	 * Rendrs the taxonomy Field
+	 * Renders the field with HTML wrap
 	 * 
 	 * @param array $args Argument for field
+	 * @param string $output_format = ( post || termEdit )
 	 * @param string $current_val Current value of the field
 	 */
-	protected function render_tax_field( $args, $current_val ){
+	protected function _render_field_wrapper( $args, $output_format, $current_val ){
 
-		$html_prefix = '<tr class="form-field ' . $args['css-class'] . '"><th scope="row">%lbl%</th><td>';
+		//Control/Label wrap start
+		echo $output_format == 'termEdit' ?	
+		  '<tr class="form-field ' . $args['css-class'] . '"><th scope="row">'
+		:
+		  '<div class="field ' . $args['css-class'] . '">';
 
-		$html_suffix = '</td></tr>';
+		//Label
+		echo '<label class="label" for="' . esc_attr($args['key']) . '">' . esc_html($args['label']) . '</label>';
 
-		$this->output_rendered_field($html_prefix, $html_suffix, $args, $current_val);
+		//Field wrap start
+		echo $output_format == 'termEdit' ?	'</th><td>' : '<div class="control">';
 
-	}
+		//The field
+		$this->_output_rendered_field($args, $current_val);
 
-	/**
-	 * Renders the post meta Field
-	 * 
-	 * @param array $args Argument for field
-	 * @param string $current_val Current value of the field
-	 */
-	protected function render_post_meta_field( $args, $current_val ){
+		//Label and field wrap close
+		echo $output_format == 'termEdit' ?	'</td></tr>' : '</div></div>';
 
-		$html_prefix = '<div class="field ' . $args['css-class'] . '">%lbl%<div class="control">';
-
-		$html_suffix = '</div></div>';
-
-		$this->output_rendered_field($html_prefix, $html_suffix, $args, $current_val);
 
 	}
 
@@ -121,12 +115,12 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @param array $args Argument for field
 	 * @param string $current_val Current value of the field
 	 */
-	protected function output_rendered_field( $html_prefix, $html_suffix, $args, $current_val ){
+	protected function _output_rendered_field( $args, $current_val ){
 
 		//Getting the method for field
-		$method = 'render_field_' . $args['type'];
+		$method = '_render_field_' . $args['type'];
 		if ( ! method_exists( $this, $method ) ) {
-			$method = 'render_field_text';
+			$method = '_render_field_text';
 		}
 
 		//Output the field
@@ -138,7 +132,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 		}
 
 		//Ouput $html with suffix and prefix
-		echo str_replace('%lbl%', '<label class="label" for="' . esc_attr($args['key']) . '">' . esc_html($args['label']) . '</label>', $html_prefix) . $html . $html_suffix;
+		echo $html;
 
 	}
 
@@ -147,10 +141,10 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @access  protected
 	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
-	 * @param   array $args  Arguments used to construct this field.
+	 * @param   string $current_val The current value of the field
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_text ( $key, $current_val ) {
+	protected function _render_field_text ( $key, $current_val ) {
 		$html = '<input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" size="40" type="text" value="' . esc_attr( $current_val ) . '" />' . "\n";
 		return $html;
 	}
@@ -160,10 +154,11 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @access  protected
 	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
+	 * @param   string $current_val The current value of the field
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_radio ( $key, $current_val, $args ) {
+	protected function _render_field_radio ( $key, $current_val, $args ) {
 		$html = '';
 		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
 			foreach ( $args['options'] as $k => $v ) {
@@ -178,10 +173,10 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @access  protected
 	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
-	 * @param   array $args  Arguments used to construct this field.
+	 * @param   string $current_val The current value of the field
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_textarea ( $key, $current_val ) {
+	protected function _render_field_textarea ( $key, $current_val ) {
 		$html = '<textarea id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" cols="42" rows="5">' . $current_val . '</textarea>' . "\n";
 		return $html;
 	}
@@ -191,10 +186,10 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @access  protected
 	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
-	 * @param   array $args  Arguments used to construct this field.
+	 * @param   array $current_val Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_checkbox ( $key, $current_val ) {
+	protected function _render_field_checkbox ( $key, $current_val ) {
 		$html = '<input id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="checkbox" value="true" ' . checked( $current_val, 'true', false ) . ' />';
 		return $html;
 	}
@@ -204,10 +199,11 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @access  protected
 	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
+	 * @param   string $current_val The current value of the field
 	 * @param   array $args  Arguments used to construct this field.
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_select ( $key, $current_val, $args ) {
+	protected function _render_field_select ( $key, $current_val, $args ) {
 		$html = '';
 		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
 			$html .= '<select id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '">' . "\n";
@@ -224,10 +220,10 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @access  protected
 	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
-	 * @param   array $args  Arguments used to construct this field.
+	 * @param   string $current_val The current value of the field
 	 * @return  string       HTML markup for the field.
 	 */
-	protected function render_field_color( $key, $current_val ) {
+	protected function _render_field_color( $key, $current_val ) {
 		$html = '<input class="color-picker-hex" id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '" type="text" value="' . esc_attr( $current_val ) . '" />';
 		return $html;
 	}
@@ -237,10 +233,10 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @access  protected
 	 * @since   1.0
 	 * @param   string $key  The unique ID of this field.
-	 * @param   array $args  Arguments used to construct this field.
+	 * @param   string $current_val The current value of the field
 	 * @return  string       HTML markup for the field.
 	 */
-	protected  function render_field_image( $key, $current_val ) {
+	protected function _render_field_image( $key, $current_val ) {
 		$html = '<input class="image-upload-path" type="text" id="' . esc_attr($key) . '" style="width: 200px; max-width: 100%;" name="' . esc_attr($key) . '" value="' . esc_attr( $current_val ) . '" /><button class="button upload-button">Upload</button>';
 		return $html;
 	}
