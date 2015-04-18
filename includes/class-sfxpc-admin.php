@@ -205,7 +205,7 @@ class SFXPC_Admin extends SFXPC_Abstract{
 
 		//Caching postdata
 		$data = $_POST[ $this->token ];
-
+		$data = array_map( 'esc_attr', $data);
 		if ( is_array( $data ) ) {
 			update_post_meta( $postID, $this->token, $data );
 		}
@@ -226,7 +226,7 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		}elseif( 
 		  ( ! isset( $pagenow ) || ! ( 'post-new.php' == $pagenow || 'post.php' == $pagenow ) )
 		  OR
-		  ( isset( $_POST['post-type'] ) && strtolower( $_POST['post_type'] ) != 'page' )
+		  ( isset( $_POST['post-type'] ) && 'page' != strtolower( $_POST['post_type'] ) )
 		) {
 			return;
 		}
