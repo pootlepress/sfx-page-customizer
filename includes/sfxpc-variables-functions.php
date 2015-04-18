@@ -6,6 +6,10 @@
  * @category Admin
  */
 
+/**
+ * Array of fields used in Post Metabox and Taxonomies
+ * @var array All the fields used in SFXPC
+ */
 $SFX_Page_Customizer_fields = array(
   //Body Controls
 	'background-image' => array(
