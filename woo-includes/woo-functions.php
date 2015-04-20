@@ -2,8 +2,9 @@
 /**
  * Functions used by plugins
  */
-if ( ! class_exists( 'WC_Dependencies' ) )
+if ( ! class_exists( 'WC_Dependencies' ) ) {
 	require_once 'class-wc-dependencies.php';
+}
 
 /**
  * WC Detection
@@ -21,8 +22,9 @@ if ( ! function_exists( 'woothemes_queue_update' ) ) {
 	function woothemes_queue_update( $file, $file_id, $product_id ) {
 		global $woothemes_queued_updates;
 
-		if ( ! isset( $woothemes_queued_updates ) )
+		if ( ! isset( $woothemes_queued_updates ) ) {
 			$woothemes_queued_updates = array();
+		}
 
 		$plugin             = new stdClass();
 		$plugin->file       = $file;
@@ -35,7 +37,7 @@ if ( ! function_exists( 'woothemes_queue_update' ) ) {
 
 /**
  * Load installer for the WooThemes Updater.
- * @return $api Object
+ * @return Object $api
  */
 if ( ! class_exists( 'WooThemes_Updater' ) && ! function_exists( 'woothemes_updater_install' ) ) {
 	function woothemes_updater_install( $api, $action, $args ) {
@@ -45,7 +47,7 @@ if ( ! class_exists( 'WooThemes_Updater' ) && ! function_exists( 'woothemes_upda
 			false !== $api ||
 			! isset( $args->slug ) ||
 			'woothemes-updater' != $args->slug
-		) return $api;
+		) { return $api; }
 
 		$api = new stdClass();
 		$api->name = 'WooThemes Updater';
@@ -67,8 +69,10 @@ if ( ! class_exists( 'WooThemes_Updater' ) && ! function_exists( 'woothemes_upda
 	 * @return void
 	 */
 	function woothemes_updater_notice() {
-		$active_plugins = apply_filters( 'active_plugins', get_option('active_plugins' ) );
-		if ( in_array( 'woothemes-updater/woothemes-updater.php', $active_plugins ) ) return;
+		$active_plugins = apply_filters( 'active_plugins', get_option( 'active_plugins' ) );
+		if ( in_array( 'woothemes-updater/woothemes-updater.php', $active_plugins ) ) {
+			return;
+		}
 
 		$slug = 'woothemes-updater';
 		$install_url = wp_nonce_url( self_admin_url( 'update.php?action=install-plugin&plugin=' . $slug ), 'install-plugin_' . $slug );
@@ -78,7 +82,7 @@ if ( ! class_exists( 'WooThemes_Updater' ) && ! function_exists( 'woothemes_upda
 		$is_downloaded = false;
 		$plugins = array_keys( get_plugins() );
 		foreach ( $plugins as $plugin ) {
-			if ( strpos( $plugin, 'woothemes-updater.php' ) !== false ) {
+			if ( false !== strpos( $plugin, 'woothemes-updater.php' ) ) {
 				$is_downloaded = true;
 				$message = '<a href="' . esc_url( admin_url( $activate_url ) ) . '">Activate the WooThemes Updater plugin</a> to get updates for your WooThemes plugins.';
 			}
@@ -93,5 +97,5 @@ if ( ! class_exists( 'WooThemes_Updater' ) && ! function_exists( 'woothemes_upda
  * Prevent conflicts with older versions
  */
 if ( ! class_exists( 'WooThemes_Plugin_Updater' ) ) {
-	class WooThemes_Plugin_Updater { function init() {} }
+	class WooThemes_Plugin_Updater { public function init() {} }
 }

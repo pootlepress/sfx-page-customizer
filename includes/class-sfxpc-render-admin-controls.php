@@ -126,7 +126,11 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 			'select', 
 			'options', 
 			'textarea', 
-			'button' );
+			'button',
+		);
+
+		$allowed = array();
+
 		foreach ( $allowed_tags as $tag ) {
 			$allowed[ $tag ] = $allowed_attr;
 		}
