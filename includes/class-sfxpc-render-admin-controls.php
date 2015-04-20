@@ -88,7 +88,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 		$this->_output_rendered_field( $args, $current_val );
 
 		//Label and field wrap close
-		echo $output_format == 'termEdit' ?	'</td></tr>' : '</div></div>';
+		echo esc_attr( $output_format ) == 'termEdit' ?	'</td></tr>' : '</div></div>';
 
 	}
 
@@ -106,16 +106,37 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 			$method = '_render_field_text';
 		}
 
+		$allowed_attr = array(
+			'name' => array(),
+			'value' => array(),
+			'type' => array(),
+			'id' => array(),
+			'class' => array(),
+			'size' => array(),
+			'for' => array(),
+			'style' => array(),
+			'checked' => array(),
+			'for' => array(),
+		);
+
+		$allowed_tags = array( 
+			'input', 
+			'label', 
+			'br', 
+			'select', 
+			'options', 
+			'textarea', 
+			'button' );
+		foreach ( $allowed_tags as $tag ) {
+			$allowed[ $tag ] = $allowed_attr;
+		}
 		//Output the field
-		$html = $this->$method( $args['key'], $current_val, $args );
+		echo wp_kses( $this->$method( $args['key'], $current_val, $args ), $allowed );
 
 		// Output the description
 		if ( isset( $args['description'] ) ) {
-			$html .= '<p class="description">' . wp_kses_post( $args['description'] ) . '</p>' . "\n";
+			echo '<p class="description">' . wp_kses_post( $args['description'] ) . '</p>' . "\n";
 		}
-
-		//Ouput $html with suffix and prefix
-		echo $html;
 
 	}
 
@@ -143,7 +164,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 */
 	protected function _render_field_radio ( $key, $current_val, $args ) {
 		$html = '';
-		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
+		if ( isset( $args['options'] ) && ( 0 < count( (array) $args['options'] ) ) ) {
 			foreach ( $args['options'] as $k => $v ) {
 				$html .= '<label for="' . esc_attr( $key ) . '"><input type="radio" name="' . esc_attr( $key ) . '" value="' . esc_attr( $k ) . '"' . checked( esc_attr( $current_val ), $k, false ) . ' /> ' . $v . '</label><br>' . "\n";
 			}
@@ -188,7 +209,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 */
 	protected function _render_field_select ( $key, $current_val, $args ) {
 		$html = '';
-		if ( isset( $args['options'] ) && ( 0 < count( (array)$args['options'] ) ) ) {
+		if ( isset( $args['options'] ) && ( 0 < count( (array) $args['options'] ) ) ) {
 			$html .= '<select id="' . esc_attr( $key ) . '" name="' . esc_attr( $key ) . '">' . "\n";
 			foreach ( $args['options'] as $k => $v ) {
 				$html .= '<option value="' . esc_attr( $k ) . '"' . selected( esc_attr( $current_val ), $k, false ) . '>' . esc_html( $v ) . '</option>' . "\n";
@@ -220,7 +241,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @return  string       HTML markup for the field.
 	 */
 	protected function _render_field_image( $key, $current_val ) {
-		$html = '<input class="image-upload-path" type="text" id="' . esc_attr($key) . '" style="width: 200px; max-width: 100%;" name="' . esc_attr($key) . '" value="' . esc_attr( $current_val ) . '" /><button class="button upload-button">Upload</button>';
+		$html = '<input class="image-upload-path" type="text" id="' . esc_attr( $key ) . '" style="width: 200px; max-width: 100%;" name="' . esc_attr($key) . '" value="' . esc_attr( $current_val ) . '" /><button class="button upload-button">Upload</button>';
 		return $html;
 	}
 

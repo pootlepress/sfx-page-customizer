@@ -174,12 +174,12 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		foreach ( $field_structure as $sec => $fields ) {
 			$Sec = ucwords( $sec );
 			
-			echo( "<li> <a href='#sfxpc-section-" . esc_attr( $sec ) . "'> " . esc_html__( $Sec ) . " </a> </li>" );
+			echo "<li> <a href='#sfxpc-section-" . esc_attr( $sec ) . "'> " . esc_html__( $Sec ) . ' </a> </li>';
 		}
 
 		echo '</ul>';
 		foreach ( $field_structure as $sec => $fields ) {
-			echo "<div class='sfxpc-section' id='sfxpc-section-{$sec}'>";
+			echo "<div class='sfxpc-section' id='sfxpc-section-" . esc_attr( $sec ) . "'>";
 			foreach ( $fields as $fld ) {
 				$this->renderer->render_field( $fld, 'post', $postMetaValues );
 			}
