@@ -245,7 +245,7 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	 * @return  string       HTML markup for the field.
 	 */
 	protected function _render_field_image( $key, $current_val ) {
-		$html = '<input class="image-upload-path" type="text" id="' . esc_attr( $key ) . '" style="width: 200px; max-width: 100%;" name="' . esc_attr($key) . '" value="' . esc_attr( $current_val ) . '" /><button class="button upload-button">Upload</button>';
+		$html = '<input class="image-upload-path" type="text" id="' . esc_attr( $key ) . '" style="width: 200px; max-width: 100%;" name="' . esc_attr( $key ) . '" value="' . esc_attr( $current_val ) . '" /><button class="button upload-button">Upload</button>';
 		return $html;
 	}
 
