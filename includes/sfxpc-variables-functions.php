@@ -11,7 +11,8 @@
  * @var array All the fields used in SFXPC
  */
 $SFX_Page_Customizer_fields = array(
-  //Body Controls
+
+	//Body Controls
 	'background-image' => array(
 		'id' => 'background-image',
 		'section' => 'background',
@@ -25,7 +26,7 @@ $SFX_Page_Customizer_fields = array(
 		'label' => 'Background repeat',
 		'type' => 'radio',
 		'default' => 'repeat',
-		'options' => array('no-repeat' => 'No Repeat','repeat' => 'Tile','repeat-x' => 'Tile Horizontally','repeat-y' => 'Tile Vertically',)
+		'options' => array( 'no-repeat' => 'No Repeat', 'repeat' => 'Tile', 'repeat-x' => 'Tile Horizontally', 'repeat-y' => 'Tile Vertically', ),
 	),
 	'background-position' => array(
 		'id' => 'background-position',
@@ -33,7 +34,7 @@ $SFX_Page_Customizer_fields = array(
 		'label' => 'Background position',
 		'type' => 'radio',
 		'default' => 'center',
-		'options' => array('left' => 'Left', 'center' => 'Center', 'right' => 'Right')
+		'options' => array( 'left' => 'Left', 'center' => 'Center', 'right' => 'Right', ),
 	),
 	'background-attachment' => array(
 		'id' => 'background-attachment',
@@ -41,16 +42,17 @@ $SFX_Page_Customizer_fields = array(
 		'label' => 'Background attachment',
 		'type' => 'radio',
 		'default' => 'scroll',
-		'options' => array('fixed' => 'Fixed','scroll' => 'Scroll')
+		'options' => array( 'fixed' => 'Fixed', 'scroll' => 'Scroll', ),
 	),
-  'background-color' => array(
+	'background-color' => array(
 		'id' => 'background-color',
 		'section' => 'background',
 		'label' => 'Page background color',
 		'type' => 'color',
 		'default' => '',
 	),
-  //Header Options
+
+	//Header Options
 	'hide-header' => array(
 		'id' => 'hide-header',
 		'section' => 'header',
@@ -64,7 +66,7 @@ $SFX_Page_Customizer_fields = array(
 		'label' => 'Header background image',
 		'type' => 'image',
 		'default' => '',
-	    'description' => 'Recommended header size is 1950 × 250 pixels.',
+		'description' => 'Recommended header size is 1950 × 250 pixels.',
 	),
 	'header-background-color' => array(
 		'id' => 'header-background-color',
@@ -95,7 +97,8 @@ $SFX_Page_Customizer_fields = array(
 		'default' => '',
 		'css-class' => 'wc-only',
 	),
-  //Menu Options
+
+	//Menu Options
 	'hide-primary-menu' => array(
 		'id' => 'hide-primary-menu',
 		'section' => 'header',
@@ -110,7 +113,8 @@ $SFX_Page_Customizer_fields = array(
 		'type' => 'checkbox',
 		'default' => '',
 	),
-  //Main Section
+
+	//Main Section
 	'hide-breadcrumbs' => array(
 		'id' => 'hide-breadcrumbs',
 		'section' => 'header',
@@ -126,7 +130,8 @@ $SFX_Page_Customizer_fields = array(
 		'type' => 'checkbox',
 		'default' => '',
 	),
-  //Content Options
+
+	//Content Options
 	'body-link-color' => array(
 		'id' => 'body-link-color',
 		'section' => 'content',
@@ -148,7 +153,8 @@ $SFX_Page_Customizer_fields = array(
 		'type' => 'color',
 		'default' => '',
 	),
-  //Layout
+
+	//Layout
 	'layout' => array(
 		'id' => 'layout',
 		'section' => 'content',
@@ -156,10 +162,11 @@ $SFX_Page_Customizer_fields = array(
 		'type' => 'radio',
 		'default' => 'right',
 		'options' => array(
-		  'left' => '<img src="' . get_template_directory_uri() . '/inc/customizer/controls/img/2cl.png">',
-		  'right' => '<img src="' . get_template_directory_uri() . '/inc/customizer/controls/img/2cr.png">')
+		'left' => '<img src="' . get_template_directory_uri() . '/inc/customizer/controls/img/2cl.png">',
+		'right' => '<img src="' . get_template_directory_uri() . '/inc/customizer/controls/img/2cr.png">', )
 	),
-  //Footer
+
+	//Footer
 	'hide-footer' => array(
 		'id' => 'hide-footer',
 		'section' => 'footer',
