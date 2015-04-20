@@ -50,67 +50,6 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 	}
 
 	/**
-	 * Initiates styles for options
-	 * 
-	 * @access  public
-	 * @since   1.0.0
-	 * @return null|string Styles
-	 */
-	public function styles_init() {
-
-		//Check if it is a supported taxonomy term archive
-		if ( is_tax( $this->supported_taxonomies ) || is_tag() || is_category() ) {
-			$settings = $this->get_tax_settings();
-		} else {
-			//If Its a post $settings woulb be trueish
-			$settings = $this->get_post_settings();
-		}
-			
-		return $settings ? $this->css( $settings ) : false;
-
-	}
-
-	public function get_post_settings() {
-
-		$is_shop = false;
-
-		if ( function_exists( 'is_shop' ) && is_shop() ) {
-			$is_shop = true;
-		}
-
-		global $post;
-
-		//Meta values for the page
-		if ( $is_shop ) {
-			$current_post = get_option( 'woocommerce_shop_page_id' );
-		} elseif ( is_home() ) {
-			$current_post = get_option( 'page_for_posts' );
-		} else {
-			$current_post = $post->ID;
-		}
-
-		return get_post_meta( $current_post , $this->token , true );
-
-	}
-
-	/**
-	 * Gets Taxonomy Settings
-	 * 
-	 * @TODO Get rid of it
-	 * @return void|null
-	 */
-	public function get_tax_settings() {
-
-		//Get term object
-		$term = get_queried_object();
-		//Get the setting name
-		$setting_name = $this->token. '-cat' . $term->term_id;
-		//Return the settings (option)
-		return get_option( $setting_name );
-
-	}
-
-	/**
 	 * Returns the css for options
 	 * 
 	 * @access  public

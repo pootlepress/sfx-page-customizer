@@ -33,20 +33,23 @@ if ( ! function_exists( 'woothemes_queue_update' ) ) {
 woothemes_queue_update( plugin_basename( __FILE__ ), 'FILE_ID', 'PRODUCT_ID' );
 // Sold On Woo - End
 
-//Parent class
+//Vars and Function
 require_once( dirname( __FILE__ ) . '/includes/sfxpc-variables-functions.php' );
 
 //Parent class
 require_once( dirname( __FILE__ ) . '/includes/class-sfxpc-abstract.php' );
 
+//Admin controls renderer
+require_once( dirname( __FILE__ ) . '/includes/class-sfxpc-render-admin-controls.php' );
+
 //Admin class
 require_once( dirname( __FILE__ ) . '/includes/class-sfxpc-admin.php' );
 
-//Admin controls renderer
+//Public Settings output renderer
 require_once( dirname( __FILE__ ) . '/includes/class-sfxpc-settings-output.php' );
 
-//Admin controls renderer
-require_once( dirname( __FILE__ ) . '/includes/class-sfxpc-render-admin-controls.php' );
+//Public class
+require_once( dirname( __FILE__ ) . '/includes/class-sfxpc-public.php' );
 
 //PootlePress Updator
 require_once( dirname( __FILE__ ) . '/includes/class-pootlepress-updater.php' );
@@ -88,6 +91,7 @@ sfx_page_customizer();
  * @author PootlePress
  */
 final class SFX_Page_Customizer {
+
 	/**
 	 * SFX_Page_Customizer The single instance of SFX_Page_Customizer.
 	 * @var 	object
@@ -129,20 +133,36 @@ final class SFX_Page_Customizer {
 	public $plugin_path;
 
 	/**
-	 * The settings object.
-	 * @var     object
-	 * @access  public
-	 * @since   1.0.0
-	 */
-	public $settings;
-
-	/**
 	 * The admin class object.
 	 * @var     object
 	 * @access  public
 	 * @since   1.0.0
 	 */
 	public $admin;
+
+	/**
+	 * The public class object.
+	 * @var     object
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $public;
+
+	/**
+	 * The post types we support.
+	 * @var     array
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $supported_post_types = array();
+
+	/**
+	 * The taxonomies we support.
+	 * @var     array
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $supported_taxonomies = array();
 
 	/**
 	 * All the post metas to populate.
@@ -179,8 +199,71 @@ final class SFX_Page_Customizer {
 	}
 
 	/**
+	 * Setup all the things.
+	 * Only executes if Storefront or a child theme using Storefront as a parent is active and the extension specific filter returns true.
+	 * Child themes can disable this extension using the sfx_page_customizer_enabled filter
+	 * @return void
+	 */
+	public function sfxpc_setup( ) {
+		$theme = wp_get_theme( );
+		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
+
+			//Supported Post Types and Taxonomies
+			$this->_get_supported_post_types();
+			$this->_get_supported_taxonomies();
+
+			//Admin Class
+			$this->admin = new SFXPC_Admin( $this->token, $this->version, $this->plugin_url, $this->supported_post_types, $this->supported_taxonomies );
+
+			//Public Class
+			$this->public = new SFXPC_Public( $this->token, $this->version, $this->plugin_url, $this->supported_post_types, $this->supported_taxonomies );
+
+			//Admin Hooks
+			$this->sfxpc_admin_hooks( );
+			//Hooks
+			$this->sfxpc_public_hooks( );
+		}
+	}
+
+	/**
+	 * Adds hooks necessary for proper functioning
+	 * 
+	 * @access  public
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	public function sfxpc_public_hooks( ) {
+
+		add_action( 'wp_enqueue_scripts', array( $this->public, 'sfxpc_styles' ), 999 );
+		add_filter( 'body_class', array( $this->public, 'sfxpc_body_class' ) );
+		
+	}
+
+	/**
+	 * Adds hooks necessary for proper functioning
+	 * 
+	 * @access  public
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	public function sfxpc_admin_hooks( ) {
+
+		add_action( 'admin_init', array( $this->admin, 'register_meta_box' ) );
+		add_action( 'save_post', array( $this->admin, 'save_post' ) );
+		add_action( 'admin_print_scripts', array( $this->admin, 'admin_scripts' ) );
+		add_action( 'customize_preview_init', array( $this->admin, 'sfxpc_customize_preview_js' ) );
+		add_filter( 'admin_body_class', array( $this->admin, 'sfxpc_admin_body_class' ) );
+		add_action( 'admin_notices', array( $this->admin, 'sfxpc_customizer_notice' ) );
+		// Hide the 'More' section in the customizer
+		add_filter( 'storefront_customizer_more', '__return_false' );
+		foreach ( $this->admin->supported_taxonomies as $tax ) {
+			add_action( "{$tax}_edit_form", array( $this->admin, 'tax_custom_fields' ) );
+		}
+		add_action( 'edit_terms', array( $this->admin, 'save_term_fields' ) );
+	}
+
+	/**
 	 * Main SFX_Page_Customizer Instance
-	 *
 	 * Ensures only one instance of SFX_Page_Customizer is loaded or can be loaded.
 	 *
 	 * @since 1.0.0
@@ -258,6 +341,37 @@ final class SFX_Page_Customizer {
 	}
 
 	/**
+	 * Gets the supported post Types
+	 * 
+	 * @access  private
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	private function _get_supported_post_types() {
+		$this->supported_post_types = array(
+		  'post',
+		  'page',
+		  'product',
+		);
+	}
+
+	/**
+	 * Gets the supported post Taxonomies
+	 * 
+	 * @access  private
+	 * @since   1.0.0
+	 * @return  void
+	 */
+	private function _get_supported_taxonomies() {
+		$this->supported_taxonomies = array(
+		  'category',
+		  'post_tag',
+		  'product_cat',
+		  'product_tag',
+		);
+	}
+
+	/**
 	 * Log the plugin version number.
 	 * @access  private
 	 * @since   1.0.0
@@ -266,86 +380,5 @@ final class SFX_Page_Customizer {
 	private function _log_version_number( ) {
 		// Log the version number.
 		update_option( $this->token . '-version', $this->version );
-	}
-
-	/**
-	 * Setup all the things.
-	 * Only executes if Storefront or a child theme using Storefront as a parent is active and the extension specific filter returns true.
-	 * Child themes can disable this extension using the sfx_page_customizer_enabled filter
-	 * @return void
-	 */
-	public function sfxpc_setup( ) {
-		$theme = wp_get_theme( );
-		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
-			//Renderer
-			$this->admin = new SFXPC_Admin( $this->token, $this->version, $this->plugin_url );
-			//settings frontend
-			$this->settings = new SFXPC_Settings_Output( $this->token, $this->version, $this->admin->supported_taxonomies );
-			//Admin Hooks
-			$this->sfxpc_admin_hooks( );
-			//Hooks
-			$this->sfxpc_hooks( );
-		}
-	}
-
-	/**
-	 * Adds hooks necessary for proper functioning
-	 * 
-	 * @access  public
-	 * @since   1.0.0
-	 * @return  void
-	 */
-	public function sfxpc_hooks( ) {
-
-		add_action( 'wp_enqueue_scripts', array( $this, 'sfxpc_styles' ), 999 );
-		add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
-		
-	}
-
-	/**
-	 * Adds hooks necessary for proper functioning
-	 * 
-	 * @access  public
-	 * @since   1.0.0
-	 * @return  void
-	 */
-	public function sfxpc_admin_hooks( ) {
-
-		add_action( 'admin_init', array( $this->admin, 'register_meta_box' ) );
-		add_action( 'save_post', array( $this->admin, 'save_post' ) );
-		add_action( 'admin_print_scripts', array( $this->admin, 'admin_scripts' ) );
-		add_action( 'customize_preview_init', array( $this->admin, 'sfxpc_customize_preview_js' ) );
-		add_filter( 'admin_body_class', array( $this->admin, 'sfxpc_admin_body_class' ) );
-		add_action( 'admin_notices', array( $this->admin, 'sfxpc_customizer_notice' ) );
-		// Hide the 'More' section in the customizer
-		add_filter( 'storefront_customizer_more', '__return_false' );
-		foreach ( $this->admin->supported_taxonomies as $tax ) {
-			add_action( "{$tax}_edit_form", array( $this->admin, 'tax_custom_fields' ) );
-		}
-		add_action( 'edit_terms', array( $this->admin, 'save_term_fields' ) );
-
-	}
-
-	/**
-	 * Enqueue CSS and custom styles.
-	 * @since   1.0.0
-	 * @return  void
-	 */
-	public function sfxpc_styles( ) {
-		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
-
-		$css = $this->settings->styles_init( );
-
-		wp_add_inline_style( 'sfxpc-styles', $css );
-	}
-
-	/**
-	 * SFX Page Customizer Body Class
-	 * Adds a class based on the extension name and any relevant settings.
-	 */
-	public function sfxpc_body_class( $classes ) {
-		$this->body_classes[] = 'sfx-page-customizer-active';
-		$this->body_classes = array_merge( $this->body_classes, $this->settings->body_classes );
-		return array_merge( $classes, $this->body_classes );
 	}
 } // End Class

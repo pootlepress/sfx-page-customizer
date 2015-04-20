@@ -9,7 +9,7 @@
 /**
  * Makes the SFX Page Customizer settings work
  *
- * @class SFXPC_Settings_Output
+ * @class SFXPC_Admin
  * @version	1.0.0
  * @since 1.0.0
  * @package	SFX_Page_Customizer
@@ -67,15 +67,14 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	public function init( $args ) {
 
 		//Basic Setup
-		$this->plugin_url 		= $args[2];
+		$this->plugin_url           = $args[2];
+		//Supported Post Types and Taxonomies
+		$this->supported_post_types = $args[3];
+		$this->supported_taxonomies = $args[4];
 
 		//Renderer
 		$this->renderer = new SFXPC_Render_Fields( $this->token, $this->version );
 
-		//Supported Post Types and Taxonomies
-		$this->_get_supported_post_types();
-		$this->_get_supported_taxonomies();
-		
 		$this->get_admin_fields();
 	}
 
@@ -90,9 +89,10 @@ class SFXPC_Admin extends SFXPC_Abstract{
 
 		$nonce = filter_input( INPUT_POST, 'sfx-pc-nonce' );
 
-		if ( ! wp_verify_nonce( esc_attr( $nonce, $action ) ) ) {
+		if ( ! wp_verify_nonce( $nonce, $action ) ) {
 			return false;
 		}
+		return true;
 	}
 
 	/**
@@ -103,25 +103,8 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	 */
 	private function _get_posted_data( ) {
 
-			return filter_input( INPUT_POST, $this->token. FILTER_DEFAULT. FILTER_REQUIRE_ARRAY );
+		return filter_input_array( INPUT_POST )[$this->token];
 
-	}
-
-	private function _get_supported_post_types() {
-		$this->supported_post_types = array(
-		  'post',
-		  'page',
-		  'product',
-		);
-	}
-
-	private function _get_supported_taxonomies() {
-		$this->supported_taxonomies = array(
-		  'category',
-		  'post_tag',
-		  'product_cat',
-		  'product_tag',
-		);
 	}
 
 	/**
