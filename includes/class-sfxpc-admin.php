@@ -239,7 +239,9 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		if ( ! $post_data OR ! $this->_verify_nonce( 'sfx-pc-post-meta' ) ) { return; }
 
 		if ( is_array( $post_data ) ) {
+
 			update_post_meta( $postID, $this->token, $post_data );
+
 		}
 		
 	}
@@ -257,8 +259,6 @@ class SFXPC_Admin extends SFXPC_Abstract{
 			wp_enqueue_media();
 		} elseif (
 		  ( ! isset( $pagenow ) OR ! ( 'post-new.php' == $pagenow OR 'post.php' == $pagenow ) )
-		  OR
-		  ( ! in_array( strtolower( filter_input( INPUT_POST, 'post_type' ) ), $this->supported_post_types ) AND ! null === filter_input( INPUT_POST, 'post_type' ) )
 		) { 
 			return;
 		}
