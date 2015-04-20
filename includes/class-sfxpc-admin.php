@@ -73,13 +73,41 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		$this->renderer = new SFXPC_Render_Fields( $this->token, $this->version );
 
 		//Supported Post Types and Taxonomies
-		$this->get_supported_post_types();
-		$this->get_supported_taxonomies();
+		$this->_get_supported_post_types();
+		$this->_get_supported_taxonomies();
 		
 		$this->get_admin_fields();
 	}
 
-	private function get_supported_post_types() {
+	/**
+	 * Verify SFXPC Nonce.
+	 * @access  private
+	 * @since   1.0.0
+	 * @param string $action
+	 * @return bool Nonce verified
+	 */
+	private function _verify_nonce( $action ) {
+
+		$nonce = filter_input( INPUT_POST, 'sfx-pc-nonce' );
+
+		if ( ! wp_verify_nonce( esc_attr( $nonce, $action ) ) ) {
+			return false;
+		}
+	}
+
+	/**
+	 * Gets postdata.
+	 * @access  private
+	 * @since   1.0.0
+	 * @return array|bool Sanitized postdata
+	 */
+	private function _get_posted_data( ) {
+
+			return filter_input( INPUT_POST, $this->token. FILTER_DEFAULT. FILTER_REQUIRE_ARRAY );
+
+	}
+
+	private function _get_supported_post_types() {
 		$this->supported_post_types = array(
 		  'post',
 		  'page',
@@ -87,7 +115,7 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		);
 	}
 
-	private function get_supported_taxonomies() {
+	private function _get_supported_taxonomies() {
 		$this->supported_taxonomies = array(
 		  'category',
 		  'post_tag',
@@ -185,29 +213,33 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		echo '</table>';
 	}
 
+	public function save_term_fields( $ID ) {
+
+		$term_data = $this->_get_posted_data();
+
+		if ( ! $term_data OR ! $this->_verify_nonce( 'sfx-pc-tax-meta' ) ) { return; }
+
+		if ( is_array( $term_data ) ) {
+
+			$option_name = $this->token.'-cat'.$ID;
+
+			update_option( $option_name, $term_data );
+		}
+	}
+
 	/**
 	 * Hooked to save_post
 	 * @param object $postID
 	 * @return null|void
 	 */
 	public function save_post( $postID ) {
-		//Checking Nonce
-		if ( ! isset( $_POST['sfx-pc-nonce'] ) || ! wp_verify_nonce( esc_attr($_POST['sfx-pc-nonce'] ), 'sfx-pc-post-meta' ) ) {
-			return;
-		}
 
-		$post = get_post( $postID );
-		 
-		//check if post type is post,page or product
-		if ( ! in_array( $post->post_type, $this->supported_post_types ) || ! isset( $_POST[ $this->token ] ) ) {
-			return;
-		}
+		$post_data = $this->_get_posted_data();
 
-		//Caching postdata
-		$data = $_POST[ $this->token ];
-		$data = array_map( 'esc_attr', $data);
-		if ( is_array( $data ) ) {
-			update_post_meta( $postID, $this->token, $data );
+		if ( ! $post_data OR ! $this->_verify_nonce( 'sfx-pc-post-meta' ) ) { return; }
+
+		if ( is_array( $post_data ) ) {
+			update_post_meta( $postID, $this->token, $post_data );
 		}
 		
 	}
@@ -224,9 +256,9 @@ class SFXPC_Admin extends SFXPC_Abstract{
 			//Though everything is commented this if section is still important coz it prevents returning the function
 			wp_enqueue_media();
 		}elseif( 
-		  ( ! isset( $pagenow ) || ! ( 'post-new.php' == $pagenow || 'post.php' == $pagenow ) )
+		  ( ! isset( $pagenow ) OR ! ( 'post-new.php' == $pagenow OR 'post.php' == $pagenow ) )
 		  OR
-		  ( isset( $_POST['post-type'] ) && 'page' != strtolower( $_POST['post_type'] ) )
+		  ( !in_array ( strtolower( filter_input( INPUT_POST, 'post_type' ) ), $this->supported_post_types ) AND ! null === filter_input( INPUT_POST, 'post_type' ) )
 		) {
 			return;
 		}

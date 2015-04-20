@@ -54,7 +54,7 @@ require_once( dirname( __FILE__ ) . '/includes/class-pootlepress-updater.php' );
 /**
  * Instantiates Pootlepress_Updater
  */
-function sfxpc_pp_updater(  ) {
+function sfxpc_pp_updater( ) {
 	if ( ! function_exists( 'get_plugin_data' ) ) {
 		include( ABSPATH . 'wp-admin/includes/plugin.php' );
 	}
@@ -62,7 +62,7 @@ function sfxpc_pp_updater(  ) {
 	$sfxpc_plugin_current_version = $data['Version'];
 	$sfxpc_plugin_remote_path = 'http://www.pootlepress.com/?updater=1';
 	$sfxpc_plugin_slug = plugin_basename( __FILE__ );
-	new Pootlepress_Updater ( $sfxpc_plugin_current_version, $sfxpc_plugin_remote_path, $sfxpc_plugin_slug );
+	new Pootlepress_Updater( $sfxpc_plugin_current_version, $sfxpc_plugin_remote_path, $sfxpc_plugin_slug );
 }
 add_action( 'init', 'sfxpc_pp_updater' );
 
@@ -72,9 +72,9 @@ add_action( 'init', 'sfxpc_pp_updater' );
  * @since  1.0.0
  * @return object SFX_Page_Customizer
  */
-function sfx_page_customizer(  ) {
-	return SFX_Page_Customizer::instance(  );
-} // End SFX_Page_Customizer(  )
+function sfx_page_customizer( ) {
+	return SFX_Page_Customizer::instance( );
+} // End SFX_Page_Customizer( )
 
 sfx_page_customizer();
 
@@ -150,20 +150,20 @@ final class SFX_Page_Customizer {
 	 * @access  public
 	 * @since   1.0.0
 	 */
-	public $post_meta = array(  );
+	public $post_meta = array();
 
 	/**
 	 * Array of classes to be put in body
 	 * @var array 
 	 */
-	public $body_classes = array(  );
+	public $body_classes = array();
 	
 	/**
 	 * Constructor function.
 	 * @access  public
 	 * @since   1.0.0
 	 */
-	public function __construct(  ) {
+	public function __construct( ) {
 		$this->token 			= 'sfx-page-customizer';
 		$this->plugin_path 		= plugin_dir_path( __FILE__ );
 		$this->plugin_url 		= plugin_dir_url( __FILE__ );
@@ -185,15 +185,15 @@ final class SFX_Page_Customizer {
 	 *
 	 * @since 1.0.0
 	 * @static
-	 * @see SFX_Page_Customizer(  )
+	 * @see SFX_Page_Customizer( )
 	 * @return Main SFX_Page_Customizer instance
 	 */
-	public static function instance(  ) {
+	public static function instance( ) {
 		if ( is_null( self::$_instance ) ) {
-			self::$_instance = new self(  );
+			self::$_instance = new self( );
 		}
 		return self::$_instance;
-	} // End instance(  )
+	} // End instance( )
 
 	/**
 	 * Load the localisation file.
@@ -201,7 +201,7 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	public function sfxpc_load_plugin_textdomain(  ) {
+	public function sfxpc_load_plugin_textdomain( ) {
 		load_plugin_textdomain( 'sfx-page-customizer', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
 	}
 
@@ -210,7 +210,7 @@ final class SFX_Page_Customizer {
 	 *
 	 * @since 1.0.0
 	 */
-	public function __clone(  ) {
+	public function __clone( ) {
 		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), '1.0.0' );
 	}
 
@@ -219,7 +219,7 @@ final class SFX_Page_Customizer {
 	 *
 	 * @since 1.0.0
 	 */
-	public function __wakeup(  ) {
+	public function __wakeup( ) {
 		_doing_it_wrong( __FUNCTION__, __( 'Cheatin&#8217; huh?' ), '1.0.0' );
 	}
 
@@ -230,8 +230,8 @@ final class SFX_Page_Customizer {
 	 */
 	public function sfxpc_plugin_links( $links ) {
 		$plugin_links = array( 
-			'<a href="http://support.woothemes.com/">' . __( 'Support', 'sfx-page-customizer' ) . '</a>',
-			'<a href="http://docs.woothemes.com/document/sfx-page-customizer/">' . __( 'Docs', 'sfx-page-customizer' ) . '</a>',
+			'<a href="http://support.woothemes.com/">' . esc_html__( 'Support', 'sfx-page-customizer' ) . '</a>',
+			'<a href="http://docs.woothemes.com/document/sfx-page-customizer/">' . esc_html__( 'Docs', 'sfx-page-customizer' ) . '</a>',
 		 );
 
 		return array_merge( $plugin_links, $links );
@@ -244,14 +244,14 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	public function install(  ) {
-		$this->_log_version_number(  );
+	public function install( ) {
+		$this->_log_version_number( );
 
-		$notices 		= get_option( 'sfxpc_activation_notice', array(  ) );
+		$notices 		= get_option( 'sfxpc_activation_notice', array() );
 		$notices[]		= '<p>' 
-		  . sprintf( __( 
+		  . esc_html__( 
 			  'Thanks for installing Page Customizer extension for Storefront. You now have new options for individual pages, posts and products. You can find these options underneath the WordPress editor when you edit pages, posts and products.',
-		  'sfx-page-customizer' ) ) 
+		  'sfx-page-customizer' )
 		  . '</p>';
 
 		update_option( 'sfxpc_activation_notice', $notices );
@@ -263,7 +263,7 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	private function _log_version_number(  ) {
+	private function _log_version_number( ) {
 		// Log the version number.
 		update_option( $this->token . '-version', $this->version );
 	}
@@ -274,17 +274,17 @@ final class SFX_Page_Customizer {
 	 * Child themes can disable this extension using the sfx_page_customizer_enabled filter
 	 * @return void
 	 */
-	public function sfxpc_setup(  ) {
-		$theme = wp_get_theme(  );
+	public function sfxpc_setup( ) {
+		$theme = wp_get_theme( );
 		if ( 'Storefront' == $theme->name || 'storefront' == $theme->template && apply_filters( 'sfx_page_customizer_supported', true ) ) {
 			//Renderer
 			$this->admin = new SFXPC_Admin( $this->token, $this->version, $this->plugin_url );
 			//settings frontend
 			$this->settings = new SFXPC_Settings_Output( $this->token, $this->version, $this->admin->supported_taxonomies );
 			//Admin Hooks
-			$this->sfxpc_admin_hooks(  );
+			$this->sfxpc_admin_hooks( );
 			//Hooks
-			$this->sfxpc_hooks(  );
+			$this->sfxpc_hooks( );
 		}
 	}
 
@@ -295,7 +295,7 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	public function sfxpc_hooks(  ) {
+	public function sfxpc_hooks( ) {
 
 		add_action( 'wp_enqueue_scripts', array( $this, 'sfxpc_styles' ), 999 );
 		add_filter( 'body_class', array( $this, 'sfxpc_body_class' ) );
@@ -309,13 +309,9 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	public function sfxpc_admin_hooks(  ) {
+	public function sfxpc_admin_hooks( ) {
 
-		add_action( 'edit_terms', array( $this, 'save_term_fields' ) );
-		
-		$admin = $this->admin;
-		
-		add_action( 'admin_init', array( $admin, 'register_meta_box' ) );
+		add_action( 'admin_init', array( $this->admin, 'register_meta_box' ) );
 		add_action( 'save_post', array( $this->admin, 'save_post' ) );
 		add_action( 'admin_print_scripts', array( $this->admin, 'admin_scripts' ) );
 		add_action( 'customize_preview_init', array( $this->admin, 'sfxpc_customize_preview_js' ) );
@@ -326,21 +322,8 @@ final class SFX_Page_Customizer {
 		foreach ( $this->admin->supported_taxonomies as $tax ) {
 			add_action( "{$tax}_edit_form", array( $this->admin, 'tax_custom_fields' ) );
 		}
-		
-	}
+		add_action( 'edit_terms', array( $this->admin, 'save_term_fields' ) );
 
-	public function save_term_fields( $ID ) {
-
-		if ( ! isset( $_POST['sfx-pc-nonce'] ) || ! wp_verify_nonce( esc_attr($_POST['sfx-pc-nonce']), 'sfx-pc-tax-meta' ) ) {
-			return;
-		}
-
-		if ( isset( $_POST[$this->token] ) && is_array( $_POST[$this->token] ) ) {
-			$setting_name = $this->token.'-cat'.$ID;
-			$sfxPCValues = $_POST[$this->token];
-			$sfxPCValues = array_map( 'esc_attr', $sfxPCValues);
-			update_option( $setting_name, $sfxPCValues );
-		}
 	}
 
 	/**
@@ -348,10 +331,10 @@ final class SFX_Page_Customizer {
 	 * @since   1.0.0
 	 * @return  void
 	 */
-	public function sfxpc_styles(  ) {
+	public function sfxpc_styles( ) {
 		wp_enqueue_style( 'sfxpc-styles', plugins_url( '/assets/css/style.css', __FILE__ ) );
 
-		$css = $this->settings->styles_init(  );
+		$css = $this->settings->styles_init( );
 
 		wp_add_inline_style( 'sfxpc-styles', $css );
 	}
