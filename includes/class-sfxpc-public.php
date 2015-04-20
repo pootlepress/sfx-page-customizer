@@ -34,22 +34,6 @@ class SFXPC_Public extends SFXPC_Abstract {
 	public $settings;
 
 	/**
-	 * The post types we support.
-	 * @var     array
-	 * @access  public
-	 * @since   1.0.0
-	 */
-	public $supported_post_types = array();
-
-	/**
-	 * The taxonomies we support.
-	 * @var     array
-	 * @access  public
-	 * @since   1.0.0
-	 */
-	public $supported_taxonomies = array();
-
-	/**
 	 * Called by Parent::__consruct
 	 * Initiates class variables
 	 * 
@@ -59,7 +43,7 @@ class SFXPC_Public extends SFXPC_Abstract {
 	 */
 	public function init( $args ) {
 
-		parent::init($args);
+		parent::init( $args );
 
 		//Settings frontend
 		$this->settings_output	= new SFXPC_Settings_Output( $this->token, $this->version, $this->supported_taxonomies );

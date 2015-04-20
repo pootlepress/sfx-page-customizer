@@ -34,6 +34,30 @@ abstract class SFXPC_Abstract {
 	public $version;
 
 	/**
+	 * The plugin directory URL.
+	 * @var     string
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $plugin_url;
+
+	/**
+	 * The post types we support.
+	 * @var     array
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $supported_post_types = array();
+
+	/**
+	 * The taxonomies we support.
+	 * @var     array
+	 * @access  public
+	 * @since   1.0.0
+	 */
+	public $supported_taxonomies = array();
+
+	/**
 	 * Constructor function.
 	 * @access  public
 	 * @since   1.0.0
@@ -57,7 +81,7 @@ abstract class SFXPC_Abstract {
 	 */
 	public function init( $args ) {
 		
-		if( !empty( $args[2] ) && !empty( $args[3] ) && !empty( $args[4] ) ){
+		if( ! empty( $args[2] ) && ! empty( $args[3] ) && ! empty( $args[4] ) ) {
 			//Basic Setup
 			$this->plugin_url           = $args[2];
 			//Supported Post Types and Taxonomies

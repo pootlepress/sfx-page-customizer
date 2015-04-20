@@ -18,30 +18,6 @@
 class SFXPC_Admin extends SFXPC_Abstract{
 
 	/**
-	 * The plugin directory URL.
-	 * @var     string
-	 * @access  public
-	 * @since   1.0.0
-	 */
-	public $plugin_url;
-
-	/**
-	 * The post types we support.
-	 * @var     array
-	 * @access  public
-	 * @since   1.0.0
-	 */
-	public $supported_post_types = array();
-
-	/**
-	 * The taxonomies we support.
-	 * @var     array
-	 * @access  public
-	 * @since   1.0.0
-	 */
-	public $supported_taxonomies = array();
-
-	/**
 	 * All the post metas to populate.
 	 * @var     array
 	 * @access  public
@@ -67,7 +43,7 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	 */
 	public function init( $args ) {
 
-		parent::init($args);
+		parent::init( $args );
 
 		//Renderer
 		$this->renderer = new SFXPC_Render_Controls( $this->token, $this->version );
