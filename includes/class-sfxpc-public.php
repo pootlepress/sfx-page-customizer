@@ -53,16 +53,13 @@ class SFXPC_Public extends SFXPC_Abstract {
 	 * Called by Parent::__consruct
 	 * Initiates class variables
 	 * 
+	 * @param array $args Arguments to the parent __construct method
 	 * @access  public
 	 * @since   1.0.0
 	 */
 	public function init( $args ) {
 
-		//Basic Setup
-		$this->plugin_url           = $args[2];
-		//Supported Post Types and Taxonomies
-		$this->supported_post_types = $args[3];
-		$this->supported_taxonomies = $args[4];
+		parent::init($args);
 
 		//Settings frontend
 		$this->settings_output	= new SFXPC_Settings_Output( $this->token, $this->version, $this->supported_taxonomies );

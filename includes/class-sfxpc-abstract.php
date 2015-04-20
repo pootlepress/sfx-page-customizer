@@ -48,12 +48,23 @@ abstract class SFXPC_Abstract {
 	}
 	
 	/**
-	 * Initiating function for plugging in fucntionality
+	 * Called by __consruct
+	 * Initiates class variables
+	 * 
+	 * @param array $args Arguments to the parent __construct method
 	 * @access  public
 	 * @since   1.0.0
 	 */
 	public function init( $args ) {
-		//For child classes
+		
+		if( !empty( $args[2] ) && !empty( $args[3] ) && !empty( $args[4] ) ){
+			//Basic Setup
+			$this->plugin_url           = $args[2];
+			//Supported Post Types and Taxonomies
+			$this->supported_post_types = $args[3];
+			$this->supported_taxonomies = $args[4];
+		}
+
 	}
 
 

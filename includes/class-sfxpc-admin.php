@@ -50,8 +50,8 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	public $admin_fields = array();
 
 	/**
-	 * Holds instance of SFXPC_Render_Fields
-	 * @var     object SFXPC_Render_Fields
+	 * Holds instance of SFXPC_Render_Controls
+	 * @var     object SFXPC_Render_Controls
 	 * @access  public
 	 * @since   1.0.0
 	 */
@@ -61,19 +61,16 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	 * Called by Parent::__consruct
 	 * Initiates class variables
 	 * 
+	 * @param array $args Arguments to the parent __construct method
 	 * @access  public
 	 * @since   1.0.0
 	 */
 	public function init( $args ) {
 
-		//Basic Setup
-		$this->plugin_url           = $args[2];
-		//Supported Post Types and Taxonomies
-		$this->supported_post_types = $args[3];
-		$this->supported_taxonomies = $args[4];
+		parent::init($args);
 
 		//Renderer
-		$this->renderer = new SFXPC_Render_Fields( $this->token, $this->version );
+		$this->renderer = new SFXPC_Render_Controls( $this->token, $this->version );
 
 		$this->get_admin_fields();
 	}

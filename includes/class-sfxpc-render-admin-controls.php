@@ -9,13 +9,13 @@
 /**
  * Renders the fields in Post edit page and Taxonomy edit page
  *
- * @class SFXPC_render_fields
+ * @class SFXPC_Render_Controls
  * @version	1.0.0
  * @since 1.0.0
  * @package	SFX_Page_Customizer
  * @author PootlePress
  */
-class SFXPC_Render_Fields extends SFXPC_Abstract{
+class SFXPC_Render_Controls extends SFXPC_Abstract{
 
 	/**
 	 * Rendrs the taxonomy Field
