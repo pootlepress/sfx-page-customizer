@@ -42,7 +42,7 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 	 */
 	public function init( $args = null ) {
 
-		if( ! empty( $args[2] ) ) {
+		if ( ! empty( $args[2] ) ) {
 			//Basic Setup
 			$this->supported_taxonomies = $args[2];
 		}
@@ -59,7 +59,7 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 	public function styles_init() {
 
 		//Check if it is a supported taxonomy term archive
-		if(is_tax( $this->supported_taxonomies ) || is_tag() || is_category()) {
+		if ( is_tax( $this->supported_taxonomies ) || is_tag() || is_category() ) {
 			$settings = $this->get_tax_settings();
 		}else {
 			//If Its a post $settings woulb be trueish
@@ -74,16 +74,16 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 
 		$is_shop = false;
 
-		if( function_exists( 'is_shop' ) && is_shop() ) {
+		if ( function_exists( 'is_shop' ) && is_shop() ) {
 			$is_shop = true;
 		}
 
 		global $post;
 
 		//Meta values for the page
-		if( $is_shop ) {
+		if ( $is_shop ) {
 			$current_post = get_option( 'woocommerce_shop_page_id' );
-		} elseif( is_home() ) {
+		} elseif ( is_home() ) {
 			$current_post = get_option( 'page_for_posts' );
 		} else {
 			$current_post = $post->ID;
@@ -129,7 +129,7 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 		. $this->content_styles( $settings['content'] );
 
 		//Footer styles
-		if( ! empty( $settings['footer']['hide-footer'] ) ) {
+		if ( ! empty( $settings['footer']['hide-footer'] ) ) {
 			remove_all_actions( 'storefront_footer' );
 			$css .= "footer.site-footer { display:none !important; }\n";
 		}
@@ -176,16 +176,16 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 		$css .= $this->hide_title( ! empty( $head_settings['hide-title'] ) );
 		$css .= $this->remove_hooked_in_header( $head_settings );
 
-		if( $head_settings['header-background-color'] ) {
+		if ( $head_settings['header-background-color'] ) {
 			$css .= "#masthead, .sub-menu , .site-header-cart .widget_shopping_cart { background: {$head_settings['header-background-color']} !important; }";
 		}
-		if( $head_settings['header-background-image'] ) {
+		if ( $head_settings['header-background-image'] ) {
 			$css .= "#masthead { background-image: url('{$head_settings['header-background-image']}') !important; }\n";
 		}
-		if( $head_settings['header-link-color'] ) {
+		if ( $head_settings['header-link-color'] ) {
 			$css .= ".main-navigation ul li a, .site-title a, ul.menu li:not(.current_page_item) a, .site-branding h1 a{ color: {$head_settings['header-link-color']} !important; }";
 		}
-		if( $head_settings['header-text-color'] ) {
+		if ( $head_settings['header-text-color'] ) {
 			$css .= "p.site-description, ul.menu li.current-menu-item > a, .site-header-cart .widget_shopping_cart, .site-header .product_list_widget li .quantity{ color: {$head_settings['header-text-color']} !important; }";
 		}
 
@@ -203,20 +203,20 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 
 		$css = '';
 
-		if( ! empty( $head_settings['hide-header'] ) ) {
+		if ( ! empty( $head_settings['hide-header'] ) ) {
 			remove_all_actions( 'storefront_header' );
 			$css .= "#masthead { display:none !important; }\n";
 		}
-		if( ! empty( $head_settings['hide-primary-menu'] ) ) {
+		if ( ! empty( $head_settings['hide-primary-menu'] ) ) {
 			remove_action( 'storefront_header', 'storefront_primary_navigation', 50 );
 		}
-		if( ! empty( $head_settings['hide-secondary-menu'] ) ) {
+		if ( ! empty( $head_settings['hide-secondary-menu'] ) ) {
 			remove_action( 'storefront_header', 'storefront_secondary_navigation', 30 );
 		}
-		if( ! empty( $head_settings['hide-shop-cart'] ) ) {
+		if ( ! empty( $head_settings['hide-shop-cart'] ) ) {
 			remove_action( 'storefront_header', 'storefront_header_cart', 		60 );
 		}
-		if( ! empty( $head_settings['hide-breadcrumbs'] ) ) {
+		if ( ! empty( $head_settings['hide-breadcrumbs'] ) ) {
 			remove_action( 'storefront_content_top', 'woocommerce_breadcrumb', 					10 );
 			$this->body_classes[] = 'no-wc-breadcrumb';
 		}
@@ -239,13 +239,13 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 		remove_filter( 'body_class', 'storefront_layout_class' );
 		$this->body_classes[] = $content['layout'] . '-sidebar';
 		
-		if( $content['body-link-color'] ) {
+		if ( $content['body-link-color'] ) {
 			$css .= "a { color: {$content['body-link-color']} !important; }";
 		}
-		if( $content['body-text-color'] ) {
+		if ( $content['body-text-color'] ) {
 			$css .= "body, .secondary-navigation a, .widget-area .widget a, .onsale, #comments .comment-list .reply a { color: {$content['body-text-color']} !important; }";
 		}
-		if( $content['body-head-color'] ) {
+		if ( $content['body-head-color'] ) {
 			$css .= "h1, h2, h3, h4, h5, h6 { color: {$content['body-head-color']} !important; }";
 		}
 
@@ -260,10 +260,12 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 	 */
 	public function hide_title( $hideTitle ) {
 
+		$css = '';
+
 		//Hiding the title for Shop and Products
-		if( function_exists('is_shop') && is_shop() && $hideTitle ) {
+		if ( function_exists( 'is_shop' ) && is_shop() && $hideTitle ) {
 			$css .= '.page-title { display: none !important; }';
-		} elseif( $hideTitle ) {
+		} elseif ( $hideTitle ) {
 			//Fallback for Products
 			$css .= '.product_title { display: none !important; }';
 			//Solving negative margin for product rating
@@ -271,7 +273,7 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 		}
 
 		//Removing the title for post and pages
-		if( $hideTitle) {
+		if ( $hideTitle ) {
 			remove_action( 'storefront_page', 'storefront_page_header',	10 );
 			remove_action( 'storefront_single_post', 'storefront_post_header', 10 );
 		}
