@@ -15,7 +15,7 @@
 		$bg_url.change(function(){
 			if($bg_url.val() == ''){
 				$bg_options.hide(0);
-			}else{$bg_options.show(0);}
+			} else{$bg_options.show(0);}
 		})
 
         //wpColorPicker

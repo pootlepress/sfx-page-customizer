@@ -38,12 +38,12 @@ abstract class SFXPC_Abstract {
 	 * @access  public
 	 * @since   1.0.0
 	 */
-	public function __construct( $token , $version) {
+	public function __construct( $token , $version ) {
 		$this->token 			= $token;
 		$this->version 			= $version;
 
 		if ( method_exists( $this, 'init' ) ) {
-			$this->init(func_get_args());
+			$this->init( func_get_args( ) );
 		}
 	}
 	

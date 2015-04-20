@@ -160,7 +160,7 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		$class = ' sfxpc-metabox sfxpc-tabs-wrapper ';
 		$postMetaValues = get_post_meta( $post->ID , $this->token , true );
 		
-		echo "<div class='{$class}'>";
+		echo "<div class='" . esc_attr( $class ) . "'>" ;
 
 		//WP Nonce
 		wp_nonce_field( 'sfx-pc-post-meta', 'sfx-pc-nonce' );
@@ -171,14 +171,14 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		}
 
 		echo "<ul class='sfxpc-sections-nav nav-tab-wrapper'>";
-		foreach( $field_structure as $sec => $fields ) {
+		foreach ( $field_structure as $sec => $fields ) {
 			$Sec = ucwords( $sec );
 			
-			echo "<li> <a href='#sfxpc-section-{$sec}'> $Sec </a> </li>";
+			echo( "<li> <a href='#sfxpc-section-" . esc_attr( $sec ) . "'> " . esc_html__( $Sec ) . " </a> </li>" );
 		}
 
 		echo '</ul>';
-		foreach( $field_structure as $sec => $fields ) {
+		foreach ( $field_structure as $sec => $fields ) {
 			echo "<div class='sfxpc-section' id='sfxpc-section-{$sec}'>";
 			foreach ( $fields as $fld ) {
 				$this->renderer->render_field( $fld, 'post', $postMetaValues );
@@ -201,7 +201,7 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		$fields = $this->admin_fields;
 
 		$taxonomy = get_taxonomy( $term->taxonomy );
-		echo '<h2>Customize Storefront options for this ' . $taxonomy->labels->singular_name . ' archive</h2>';
+		echo '<h2>Customize Storefront options for this ' . esc_html( $taxonomy->labels->singular_name ) . ' archive</h2>';
 
 		//Nonce
 		wp_nonce_field( 'sfx-pc-tax-meta', 'sfx-pc-nonce' );
@@ -252,21 +252,21 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	public function admin_scripts() {
 		global $pagenow;
 
-		if( 'edit-tags.php' == $pagenow ) {
+		if ( 'edit-tags.php' == $pagenow ) {
 			//Though everything is commented this if section is still important coz it prevents returning the function
 			wp_enqueue_media();
-		}elseif( 
+		} elseif (
 		  ( ! isset( $pagenow ) OR ! ( 'post-new.php' == $pagenow OR 'post.php' == $pagenow ) )
 		  OR
-		  ( ! in_array ( strtolower( filter_input( INPUT_POST, 'post_type' ) ), $this->supported_post_types ) AND ! null === filter_input( INPUT_POST, 'post_type' ) )
-		) {
+		  ( ! in_array( strtolower( filter_input( INPUT_POST, 'post_type' ) ), $this->supported_post_types ) AND ! null === filter_input( INPUT_POST, 'post_type' ) )
+		) { 
 			return;
 		}
 
 		// only in post and page create and edit screen
 
-		wp_enqueue_script( 'jquery-ui-tabs');
-		wp_enqueue_script( 'wp-color-picker');
+		wp_enqueue_script( 'jquery-ui-tabs' );
+		wp_enqueue_script( 'wp-color-picker' );
 		wp_enqueue_script( 'sfxpc-admin-script', trailingslashit( $this->plugin_url ) . 'assets/js/admin/admin.js', array( 'wp-color-picker', 'jquery', 'thickbox' ) );
 
 		wp_enqueue_style( 'jquery-ui-style', '//code.jquery.com/ui/1.11.2/themes/smoothness/jquery-ui.css' );

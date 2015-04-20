@@ -27,23 +27,12 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 
 		$current_val = $args['default'];
 		//Getting current value
-		if( isset( $settings[ $args['section'] ][ $args['id'] ] ) ) {
-			$current_val = $settings[$args['section']][$args['id']];
+		if ( isset( $settings[ $args['section'] ][ $args['id'] ] ) ) {
+			$current_val = $settings[ $args['section'] ][ $args['id'] ];
 		}
 		
 		return $current_val;
 
-	}
-
-	/**
-	 * Gets the key for the field
-	 * 
-	 * @param string $section
-	 * @param string $id
-	 * @return type
-	 */
-	private function _get_field_key($section, $id) {
-		return $this->token . '[' . $section . '][' . $id . ']';
 	}
 
 	/**
@@ -58,20 +47,17 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	public function render_field ( $args, $output_format, $current_data ) {
 
 		// Construct the key.
-		$args['key'] = $this->_get_field_key($args['section'], $args['id'] );
-
+		$args['key'] = $this->token . '[' . $args['section'] . '][' . $args['id'] .']';
 
 		//Setting blank css-class key if not set
-		if( ! isset($args['css-class'] ) ) $args['css-class'] = '';
+		if ( ! isset( $args['css-class'] ) ) { $args['css-class'] = ''; }
 		
 		$args['css-class'] .= ' sfxpc-field '  . $args['id'];
 
 		// Make sure we have some kind of default, if the key isn't set.
-		if ( ! isset( $args['default'] ) ) {
-			$args['default'] = '';
-		}
+		if ( ! isset( $args['default'] ) ) { $args['default'] = ''; }
 
-		$current_val = $this->_get_current_value($args, $current_data);
+		$current_val = $this->_get_current_value( $args, $current_data );
 
 		$this->_render_field_wrapper( $args, $output_format, $current_val );
 
@@ -87,31 +73,28 @@ class SFXPC_Render_Fields extends SFXPC_Abstract{
 	protected function _render_field_wrapper( $args, $output_format, $current_val ) {
 
 		//Control/Label wrap start
-		echo $output_format == 'termEdit' ?	
-		  '<tr class="form-field ' . $args['css-class'] . '"><th scope="row">'
+		echo esc_attr( $output_format ) == 'termEdit' ?	
+		  '<tr class="form-field ' . esc_attr( $args['css-class'] ) . '"><th scope="row">'
 		:
-		  '<div class="field ' . $args['css-class'] . '">';
+		  '<div class="field ' . esc_attr( $args['css-class'] ) . '">';
 
 		//Label
-		echo '<label class="label" for="' . esc_attr($args['key'] ) . '">' . esc_html($args['label'] ) . '</label>';
+		echo '<label class="label" for="' . esc_attr( $args['key'] ) . '">' . esc_html( $args['label'] ) . '</label>';
 
 		//Field wrap start
-		echo $output_format == 'termEdit' ?	'</th><td>' : '<div class="control">';
+		echo esc_attr( $output_format ) == 'termEdit' ?	'</th><td>' : '<div class="control">';
 
 		//The field
-		$this->_output_rendered_field($args, $current_val);
+		$this->_output_rendered_field( $args, $current_val );
 
 		//Label and field wrap close
 		echo $output_format == 'termEdit' ?	'</td></tr>' : '</div></div>';
-
 
 	}
 
 	/**
 	 * Outputs the field after rendering with HTML for the context
 	 * 
-	 * @param string $html_prefix
-	 * @param string $html_suffix
 	 * @param array $args Argument for field
 	 * @param string $current_val Current value of the field
 	 */

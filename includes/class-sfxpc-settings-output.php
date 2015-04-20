@@ -61,7 +61,7 @@ class SFXPC_Settings_Output extends SFXPC_Abstract {
 		//Check if it is a supported taxonomy term archive
 		if ( is_tax( $this->supported_taxonomies ) || is_tag() || is_category() ) {
 			$settings = $this->get_tax_settings();
-		}else {
+		} else {
 			//If Its a post $settings woulb be trueish
 			$settings = $this->get_post_settings();
 		}
