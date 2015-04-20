@@ -3,7 +3,7 @@
  * Created by Alan on 15/7/2014.
  */
 
-if (! class_exists( 'Pootlepress_Updater' ) ) {
+if ( ! class_exists( 'Pootlepress_Updater' ) ) {
 	class Pootlepress_Updater {
 		/**
 		 * The plugin current version
@@ -35,7 +35,7 @@ if (! class_exists( 'Pootlepress_Updater' ) ) {
 		 * @param string $update_path
 		 * @param string $plugin_slug
 		 */
-		public function __construct($current_version, $update_path, $plugin_slug)
+		public function __construct( $current_version, $update_path, $plugin_slug )
 		{
 			// Set the class public variables
 			$this->current_version = $current_version;
@@ -112,7 +112,7 @@ if (! class_exists( 'Pootlepress_Updater' ) ) {
 		{
 			$request = wp_remote_post( $this->update_path, array( 'body' => array( 'action' => 'version', 'plugin' => $this->slug ) ) );
 
-			if ( !is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) === 200 ) {
+			if ( ! is_wp_error( $request ) || wp_remote_retrieve_response_code( $request ) === 200 ) {
 				return $request['body'];
 			}
 			return false;

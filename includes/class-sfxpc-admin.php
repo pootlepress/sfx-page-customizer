@@ -258,7 +258,7 @@ class SFXPC_Admin extends SFXPC_Abstract{
 		}elseif( 
 		  ( ! isset( $pagenow ) OR ! ( 'post-new.php' == $pagenow OR 'post.php' == $pagenow ) )
 		  OR
-		  ( !in_array ( strtolower( filter_input( INPUT_POST, 'post_type' ) ), $this->supported_post_types ) AND ! null === filter_input( INPUT_POST, 'post_type' ) )
+		  ( ! in_array ( strtolower( filter_input( INPUT_POST, 'post_type' ) ), $this->supported_post_types ) AND ! null === filter_input( INPUT_POST, 'post_type' ) )
 		) {
 			return;
 		}
