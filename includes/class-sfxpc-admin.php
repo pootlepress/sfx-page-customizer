@@ -76,7 +76,13 @@ class SFXPC_Admin extends SFXPC_Abstract{
 	 */
 	private function _get_posted_data( ) {
 
-		return filter_input_array( INPUT_POST )[$this->token];
+		$post_ = filter_input_array( INPUT_POST );
+
+		if( ! empty( $post_[ $this->token ] ) ){
+
+			return $post_[ $this->token ];
+			
+		}
 
 	}
 
